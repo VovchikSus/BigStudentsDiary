@@ -1,0 +1,205 @@
+create table Buildings
+(
+    BuildingID int not null
+        constraint PK_Buildings
+            primary key,
+    Building   varchar(255)
+)
+go
+
+create table Departments
+(
+    DepartmentName varchar(255),
+    DepartmentCode varchar(255),
+    DepartmentID   int not null
+        constraint PK_Departments
+            primary key
+)
+go
+
+create table Disciplines
+(
+    Discipline   varchar(255),
+    DisciplineID int not null
+        constraint PK_Disciplines
+            primary key
+)
+go
+
+create table Floors
+(
+    Floor   nvarchar(255),
+    FloorID int not null
+        constraint PK_Floors
+            primary key
+)
+go
+
+create table Groups
+(
+    GroupCode varchar(255),
+    GroupID   int not null
+        constraint PK_Groups
+            primary key
+)
+go
+
+create table MY_TABLE
+(
+    Discipline       varchar(255),
+    DepartmentName   varchar(255),
+    DepartmentCode   varchar(255),
+    GroupCode        varchar(255),
+    SemesterName     varchar(255),
+    Floor            nvarchar(50),
+    Building         varchar(255),
+    Number           nvarchar(50),
+    TeacherFIO       varchar(255),
+    Room             varchar(255),
+    dayDate          date,
+    dayOfWeekName    varchar(255),
+    TypeShort        varchar(255),
+    TypeID           int,
+    Type             varchar(255),
+    TimeStart        time,
+    TimeEnd          time,
+    TimeRange        varchar(255),
+    active           bit,
+    BuildingID       int,
+    GroupID          int,
+    DisciplineID     int,
+    TeacherID        int,
+    RoomID           int,
+    FloorID          int,
+    DepartmentID     int,
+    SemesterID       int,
+    finalCheckType   varchar(255),
+    finalCheckTypeID int,
+    isSession        bit
+)
+go
+
+create table Rooms
+(
+    Room   varchar(255),
+    RoomID int not null
+        constraint PK_Rooms
+            primary key
+)
+go
+
+create table Semestrs
+(
+    SemesterName varchar(255),
+    SemesterID   int not null
+        constraint PK_Semestrs
+            primary key
+)
+go
+
+create table Students
+(
+    IdStudent uniqueidentifier not null
+        constraint PK_Students
+            primary key,
+    Name      varchar(50),
+    Surname   varchar(50),
+    GroupID   int
+        constraint FK_Students_Groups
+            references Groups
+)
+go
+
+create table Teachers
+(
+    TeacherFIO varchar(255),
+    TeacherID  int not null
+        constraint PK_Teachers
+            primary key
+)
+go
+
+create table Types
+(
+    TypeID    int not null
+        constraint PK_Types
+            primary key,
+    Type      varchar(255),
+    TypeShort varchar(255)
+)
+go
+
+create table sysdiagrams
+(
+    name         sysname not null,
+    principal_id int     not null,
+    diagram_id   int identity
+        primary key,
+    version      int,
+    definition   varbinary(max),
+    constraint UK_principal_name
+        unique (principal_id, name)
+)
+go
+
+exec sp_addextendedproperty 'microsoft_database_tools_support', 1, 'SCHEMA', 'dbo', 'TABLE', 'sysdiagrams'
+go
+
+-- Cyclic dependencies found
+
+create table TimeTable
+(
+    IdLecturer   uniqueidentifier,
+    Date         date,
+    GroupCode    uniqueidentifier,
+    NumberLesson nchar(10),
+    Discipline   nchar(10),
+    IdStudent    uniqueidentifier,
+    Floor        nchar(10)
+)
+go
+
+create table TimeTable
+(
+    dayDate       date,
+    Number        nvarchar(255),
+    DisciplineID  int
+        constraint FK_TimeTable_Disciplines
+            references Disciplines,
+    FloorID       int
+        constraint FK_TimeTable_Floors
+            references Floors,
+    dayOfWeekName varchar(255),
+    TimeStart     time,
+    TimeEnd       time,
+    TimeRange     varchar(255),
+    isSession     bit,
+    GroupID       int
+        constraint FK_TimeTable_Groups
+            references Groups,
+    BuildingID    int
+        constraint FK_TimeTable_Buildings
+            references Buildings,
+    TeacherID     int
+        constraint FK_TimeTable_Teachers
+            references Teachers,
+    RoomID        int
+        constraint FK_TimeTable_Rooms
+            references Rooms,
+    DepartmentID  int
+        constraint FK_TimeTable_Departments
+            references Departments,
+    SemesterID    int
+        constraint FK_TimeTable_Semestrs
+            references Semestrs,
+    TypeID        int
+        constraint FK_TimeTable_Types
+            references Types
+)
+go
+
+
+
+
+
+
