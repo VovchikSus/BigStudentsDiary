@@ -1,0 +1,23 @@
+{
+  "Version": 1,
+  "Hash": "Ck7Cq2rM+6fBU7jAhKeoMkY77u/WKWDDtC1F4YOBwJc=",
+  "Source": "BigStudentsDiary.Domain",
+  "BasePath": "_content/BigStudentsDiary.Domain",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [
+    {
+      "Identity": "D:\\PROJECTS\\BigStundetsDiary\\BigStudentsDiary.Core\\BigStudentsDiary.Core.csproj",
+      "Version": 2,
+      "Source": "BigStudentsDiary.Core",
+      "GetPublishAssetsTargets": "ComputeReferencedStaticWebAssetsPublishManifest;GetCurrentProjectPublishStaticWebAssetItems",
+      "AdditionalPublishProperties": "Configuration=Debug;Platform=AnyCPU",
+      "AdditionalPublishPropertiesToRemove": "WebPublishProfileFile;TargetFramework;RuntimeIdentifier;SelfContained",
+      "GetBuildAssetsTargets": "GetCurrentProjectBuildStaticWebAssetItems",
+      "AdditionalBuildProperties": "Configuration=Debug;Platform=AnyCPU",
+      "AdditionalBuildPropertiesToRemove": "WebPublishProfileFile;TargetFramework;RuntimeIdentifier;SelfContained"
+    }
+  ],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
