@@ -10,6 +10,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<IStudentsRepository, StudentsRepository>();
+builder.Services.AddSingleton<ITeachersRepository, TeachersRepository>();
 builder.Services.AddSingleton<ExceptionMiddleware>();
 
 var app = builder.Build();
