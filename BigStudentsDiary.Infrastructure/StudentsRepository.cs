@@ -55,14 +55,18 @@ public class StudentsRepository : IStudentsRepository
             return new ElementNotFound($"Студент с id {student.StudentId} не найден");
 
         existing.Name = student.Name;
+        existing.Surname = student.Surname;
+        existing.StudentPassword = student.StudentPassword;
+        existing.StudentLogin = student.StudentLogin;
+        existing.GroupId = student.GroupId;
 
         await this.ExecuteNonQueryAsync(
-            $"UPDATE [Students] SET Name='{existing.Name}' WHERE StudentId= '{existing.StudentId}'");
+            $"UPDATE [Students] SET Name='{existing.Name}',Surname='{existing.Surname}', StudentPassword = '{existing.StudentPassword}', StudentLogin = '{existing.StudentLogin}', GroupId = '{existing.GroupId}' WHERE StudentId= '{existing.StudentId}'");
 
         return new Success();
     }
-    
-    
+
+
     public async Task<IOperationResult<IEnumerable<Students>>> GetAllAsync(Func<Students, bool> selectFunc = null)
     {
         var result = await this.ExecuteQueryAsync("SELECT * FROM [Students]");
@@ -73,7 +77,9 @@ public class StudentsRepository : IStudentsRepository
         }
         else
         {
-            return new Success<IEnumerable<Students>>(result.Where(selectFunc)); // Вернем отфильтрованные элементы, если selectFunc указан
+            return
+                new Success<IEnumerable<Students>>(
+                    result.Where(selectFunc)); // Вернем отфильтрованные элементы, если selectFunc указан
         }
     }
 
