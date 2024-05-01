@@ -11,6 +11,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<IStudentsRepository, StudentsRepository>();
 builder.Services.AddSingleton<ITeachersRepository, TeachersRepository>();
+builder.Services.AddSingleton<IHomeWorksRepository, HomeWorksRepository>();
 builder.Services.AddSingleton<ExceptionMiddleware>();
 
 var app = builder.Build();
