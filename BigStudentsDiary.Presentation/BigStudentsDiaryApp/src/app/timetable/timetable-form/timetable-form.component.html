@@ -1,0 +1,27 @@
+<form #form="ngForm" (submit)="OnSubmit(form)" >
+  <div class="mb-3">
+    <label>Введите дату</label>
+    <input class="form-control form-control-lg" type="date" #dayDate="ngModel" name="dayDate" [(ngModel)]="service.formData.dayDate">
+    <label>Введите группу</label>
+    <input class="form-control form-control-lg" placeholder="Название группы" #groupId="ngModel" name="groupId" [(ngModel)]="service.formData.groupId">
+  </div>
+
+  <div class="d-grid">
+    <button class="btn btn-lg btn-success" type="submit">Получить расписание</button>
+  </div>
+</form>
+
+<ul class="list-group">
+  <li class="list-group-item d-flex justify-content-between align-items-start mb-2 border px-4 rounded-3"
+      *ngFor="let tt of service.list">
+
+    <div class="flex-grow-1 mouse-hover">
+    <div class="fw-bold">{{ tt.number }}</div>
+    <div class="fw-bold">{{ tt.disciplineId }}</div>
+    <div class="fw-bold">{{ tt.floorId }}</div>
+    <div class="fw-bold">{{ tt.roomId }}</div>
+    <div class="fw-bold"> {{ tt.teacherInternalId }}</div>
+    </div>
+
+  </li>
+</ul>

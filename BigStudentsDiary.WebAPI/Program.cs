@@ -12,6 +12,7 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<IStudentsRepository, StudentsRepository>();
 builder.Services.AddSingleton<ITeachersRepository, TeachersRepository>();
 builder.Services.AddSingleton<IHomeWorksRepository, HomeWorksRepository>();
+builder.Services.AddSingleton<ITimeTableRepository, TimeTableRepository>();
 builder.Services.AddSingleton<ExceptionMiddleware>();
 
 var app = builder.Build();
@@ -27,6 +28,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors(options => options.WithOrigins("http://localhost:4200").AllowAnyMethod().AllowAnyHeader());
 
 app.UseHttpsRedirection();
 
