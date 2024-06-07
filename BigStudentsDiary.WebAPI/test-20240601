@@ -1,0 +1,31 @@
+2024-06-01 23:48:18.148 +03:00 [Error] No service for type 'BigStudentsDiary.Domain.Services.StudentsService' has been registered.
+System.InvalidOperationException: No service for type 'BigStudentsDiary.Domain.Services.StudentsService' has been registered.
+   at Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService(IServiceProvider provider, Type serviceType)
+   at lambda_method5(Closure, Object, HttpContext, Object)
+   at Microsoft.AspNetCore.Http.RequestDelegateFactory.<>c__DisplayClass102_2.<<HandleRequestBodyAndCompileRequestDelegateForJson>b__2>d.MoveNext()
+--- End of stack trace from previous location ---
+   at BigStudentsDiary.WebAPI.ExceptionMiddleware.InvokeAsync(HttpContext context, RequestDelegate next) in D:\PROJECTS\BigStundetsDiary\BigStudentsDiary.WebAPI\ExceptionMiddleware.cs:line 14
+2024-06-01 23:51:43.016 +03:00 [Error] Invalid salt version
+BCrypt.Net.SaltParseException: Invalid salt version
+   at BCrypt.Net.BCrypt.HashPassword(String inputKey, String salt, Boolean enhancedEntropy, HashType hashType)
+   at BCrypt.Net.BCrypt.Verify(String text, String hash, Boolean enhancedEntropy, HashType hashType)
+   at BCrypt.Net.BCrypt.EnhancedVerify(String text, String hash, HashType hashType)
+   at BigStudentsDiary.Infrastructure.PasswordHasher.Verify(String password, String hashedPassword) in D:\PROJECTS\BigStundetsDiary\BigStudentsDiary.Infrastructure\PasswordHasher.cs:line 10
+   at BigStudentsDiary.Domain.Services.StudentsService.Login(String login, String password) in D:\PROJECTS\BigStundetsDiary\BigStudentsDiary.Domain\Services\StudentsService.cs:line 39
+   at BigStudentsDiary.WebAPI.EndPoints.StudentEndPoints.Login(LoginStudentRequest request, StudentsService studentsService) in D:\PROJECTS\BigStundetsDiary\BigStudentsDiary.WebAPI\EndPoints\StudentEndPoints.cs:line 35
+   at Microsoft.AspNetCore.Http.RequestDelegateFactory.ExecuteTaskResult[T](Task`1 task, HttpContext httpContext)
+   at Microsoft.AspNetCore.Http.RequestDelegateFactory.<>c__DisplayClass102_2.<<HandleRequestBodyAndCompileRequestDelegateForJson>b__2>d.MoveNext()
+--- End of stack trace from previous location ---
+   at BigStudentsDiary.WebAPI.ExceptionMiddleware.InvokeAsync(HttpContext context, RequestDelegate next) in D:\PROJECTS\BigStundetsDiary\BigStudentsDiary.WebAPI\ExceptionMiddleware.cs:line 14
+2024-06-01 23:58:38.990 +03:00 [Error] Invalid salt version
+BCrypt.Net.SaltParseException: Invalid salt version
+   at BCrypt.Net.BCrypt.HashPassword(String inputKey, String salt, Boolean enhancedEntropy, HashType hashType)
+   at BCrypt.Net.BCrypt.Verify(String text, String hash, Boolean enhancedEntropy, HashType hashType)
+   at BCrypt.Net.BCrypt.EnhancedVerify(String text, String hash, HashType hashType)
+   at BigStudentsDiary.Infrastructure.PasswordHasher.Verify(String password, String hashedPassword) in D:\PROJECTS\BigStundetsDiary\BigStudentsDiary.Infrastructure\PasswordHasher.cs:line 10
+   at BigStudentsDiary.Domain.Services.StudentsService.Login(String login, String password) in D:\PROJECTS\BigStundetsDiary\BigStudentsDiary.Domain\Services\StudentsService.cs:line 39
+   at BigStudentsDiary.WebAPI.EndPoints.StudentEndPoints.Login(LoginStudentRequest request, StudentsService studentsService) in D:\PROJECTS\BigStundetsDiary\BigStudentsDiary.WebAPI\EndPoints\StudentEndPoints.cs:line 35
+   at Microsoft.AspNetCore.Http.RequestDelegateFactory.ExecuteTaskResult[T](Task`1 task, HttpContext httpContext)
+   at Microsoft.AspNetCore.Http.RequestDelegateFactory.<>c__DisplayClass102_2.<<HandleRequestBodyAndCompileRequestDelegateForJson>b__2>d.MoveNext()
+--- End of stack trace from previous location ---
+   at BigStudentsDiary.WebAPI.ExceptionMiddleware.InvokeAsync(HttpContext context, RequestDelegate next) in D:\PROJECTS\BigStundetsDiary\BigStudentsDiary.WebAPI\ExceptionMiddleware.cs:line 14

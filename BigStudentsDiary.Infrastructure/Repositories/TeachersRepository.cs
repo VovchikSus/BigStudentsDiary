@@ -2,18 +2,15 @@ using BigStudentsDiary.Core.Implementations;
 using BigStudentsDiary.Core.Interfaces;
 using BigStudentsDiary.Domain.Interfaces;
 using BigStudentsDiary.Domain.Models;
+using BigStudentsDiary.Infrastructure.CreationObjectFromSql;
 using Microsoft.Data.SqlClient;
 
-namespace BigStudentsDiary.Infrastructure;
+namespace BigStudentsDiary.Infrastructure.Repositories;
 
-public class TeachersRepository : ITeachersRepository
+public class TeachersRepository : RepositoryBase, ITeachersRepository
 {
-    private readonly string connectionStringName = "MainConnectionString";
-    readonly IConfiguration configuration;
-
-    public TeachersRepository(IConfiguration configuration)
+    public TeachersRepository(IConfiguration configuration) : base(configuration)
     {
-        this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
     public async Task<IOperationResult<Guid>> AddTeacher(Teachers teacher)
@@ -24,9 +21,14 @@ public class TeachersRepository : ITeachersRepository
         }
 
         var id = Guid.NewGuid();
+        await ExecuteNonQueryAsync(
+            "INSERT INTO [Teachers] (TeacherFIO, TeacherLogin, TeacherPassword, TeacherExternalID, TeacherInternalID) VALUES (@TeacherFIO, @TeacherLogin, @TeacherPassword, @TeacherExternalID, @TeacherInternalID)",
+            new SqlParameter("@TeacherFIO", teacher.TeacherFio),
+            new SqlParameter("@TeacherLogin", teacher.TeacherLogin),
+            new SqlParameter("@TeacherPassword", teacher.TeacherPassword),
+            new SqlParameter("@TeacherExternalID", id),
+            new SqlParameter("@TeacherInternalID", teacher.TeacherInternalId));
 
-        await this.ExecuteNonQueryAsync(
-            $"INSERT INTO [Teachers] (TeacherFIO, TeacherLogin, TeacherPassword, TeacherExternalID, TeacherInternalID) Values ('{teacher.TeacherFio}','{teacher.TeacherLogin}','{teacher.TeacherPassword}','{id}','{teacher.TeacherInternalId}',)");
         return new Success<Guid>(id);
     }
 
@@ -37,85 +39,51 @@ public class TeachersRepository : ITeachersRepository
             throw new ArgumentNullException(nameof(teacher));
         }
 
-        var existing =
-            (await this.ExecuteQueryAsync(
-                $"SELECT * FROM [Teachers] WHERE TeacherExternalID='{teacher.TeacherExternalId}'")).FirstOrDefault();
+        var existing = (await ExecuteQueryAsync<Teachers, TeacherCreator>(
+            "SELECT * FROM [Teachers] WHERE TeacherExternalID = @TeacherExternalID",
+            new SqlParameter("@TeacherExternalID", teacher.TeacherExternalId))).FirstOrDefault();
+
         if (existing == null)
         {
             return new ElementNotFound($"Преподаватель с id {teacher.TeacherExternalId} не найден");
         }
 
-        existing.TeacherPassword = teacher.TeacherPassword;
-        await this.ExecuteNonQueryAsync(
-            $"UPDATE [Teachers] SET TeacherPassword= '{existing.TeacherPassword}' WHERE TeacherExternalID= '{existing.TeacherExternalId}'");
+        await ExecuteNonQueryAsync(
+            "UPDATE [Teachers] SET TeacherPassword = @TeacherPassword WHERE TeacherExternalID = @TeacherExternalID",
+            new SqlParameter("@TeacherPassword", teacher.TeacherPassword),
+            new SqlParameter("@TeacherExternalID", teacher.TeacherExternalId));
+
         return new Success();
     }
-
 
     public async Task<IOperationResult> DeleteTeacher(Guid id)
     {
-        var existing = (await this.ExecuteQueryAsync($"SELECT * FROM [Teachers] where TeacherExternalID='{id}'"))
-            .FirstOrDefault();
+        var existing = (await ExecuteQueryAsync<Teachers, TeacherCreator>(
+            "SELECT * FROM [Teachers] WHERE TeacherExternalID = @TeacherExternalID",
+            new SqlParameter("@TeacherExternalID", id))).FirstOrDefault();
+
         if (existing == null)
         {
-            return new ElementNotFound($"Не найден преподаватель с таким id{id}");
+            return new ElementNotFound($"Не найден преподаватель с таким id {id}");
         }
+
+        await ExecuteNonQueryAsync("DELETE FROM [Teachers] WHERE TeacherExternalID = @TeacherExternalID",
+            new SqlParameter("@TeacherExternalID", id));
 
         return new Success();
     }
 
-
     public async Task<IOperationResult<IEnumerable<Teachers>>> GetAllAsync(Func<Teachers, bool> selectFunc = null)
     {
-        var result = await this.ExecuteQueryAsync("SELECT * FROM [Teachers]");
+        var result = await ExecuteQueryAsync<Teachers, TeacherCreator>("SELECT * FROM [Teachers]");
 
         if (selectFunc == null)
         {
             return new Success<IEnumerable<Teachers>>(result);
         }
-
         else
         {
             return new Success<IEnumerable<Teachers>>(result.Where(selectFunc));
         }
-    }
-
-
-    private async Task ExecuteNonQueryAsync(string sql)
-    {
-        using (var connection = new SqlConnection(this.configuration.GetConnectionString(connectionStringName)))
-        {
-            connection.Open();
-            using (var command = new SqlCommand(sql, connection))
-            {
-                await command.ExecuteNonQueryAsync();
-            }
-        }
-    }
-
-    private async Task<IEnumerable<Teachers>> ExecuteQueryAsync(string sql)
-    {
-        var result = new List<Teachers>();
-        using (var connection = new SqlConnection(this.configuration.GetConnectionString(connectionStringName)))
-        {
-            connection.Open();
-            using (var command = new SqlCommand(sql, connection))
-            {
-                var reader = await command.ExecuteReaderAsync();
-                while (reader.Read())
-                {
-                    result.Add(new Teachers
-                    {
-                        TeacherExternalId = Guid.Parse(reader["TeacherExternalId"].ToString()),
-                        TeacherFio = reader["TeacherFio"].ToString(),
-                        TeacherInternalId = Int32.Parse(reader["TeacherInternalId"].ToString()),
-                        TeacherLogin = reader["TeacherLogin"].ToString(),
-                        TeacherPassword = reader["TeacherPassword"].ToString(),
-                    });
-                }
-            }
-        }
-
-        return result;
     }
 }

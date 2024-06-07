@@ -9,30 +9,59 @@ namespace BigStudentsDiary.WebAPI.Controllers;
 [ApiController]
 public class StudentsController : Controller
 {
-    IStudentsRepository studentsRepository;
+    private readonly IStudentsRepository studentsRepository;
     
     public StudentsController(IStudentsRepository repository)
     {
         this.studentsRepository = repository;
     }
 
-    // GET: api/<StudentsController>
+    // GET: api/students
     [HttpGet]
-    public async Task<ActionResult> Get() =>
-        Ok(await this.studentsRepository.GetAllAsync());
+    public async Task<ActionResult> Get()
+    {
+        var result = await this.studentsRepository.GetAllAsync();
+        return Ok(result);
+    }
     
-    // GET api/<StudentsController>/5
-    [HttpGet("{id}")]
-    public async Task<ActionResult> Get(Guid id)
+    // GET api/students/{id}
+    [HttpGet("{id:guid}")]
+    public async Task<ActionResult> GetById(Guid id)
     {
         var result = await this.studentsRepository.GetAllAsync(x => x.StudentId == id);
         if (result.Result.Any())
             return Ok(result);
 
-        return BadRequest($"Студент с таким id={id} не найден!");
+        return NotFound($"Студент с id={id} не найден!");
+    }
+    
+    // [HttpGet("group")]
+    // public IActionResult GetGroup()
+    // {
+    //     var groupIdClaim = User.Claims.FirstOrDefault(c => c.Type == "groupId");
+    //     if (groupIdClaim == null)
+    //     {
+    //         return Unauthorized("GroupId not found in token");
+    //     }
+    //
+    //     var groupId = int.Parse(groupIdClaim.Value);
+    //     // Используйте groupId для выполнения запроса
+    //     var group = studentsRepository.GetGroupById(groupId);
+    //     return Ok(group);
+    // }
+    
+    // GET: api/students/login/{login}
+    [HttpGet("login/{login}")]
+    public async Task<ActionResult> GetByLogin(string login)
+    {
+        var result = await this.studentsRepository.GetAllAsync(x => x.StudentLogin == login);
+        if (result.Result.Any())
+            return Ok(result);
+
+        return NotFound($"Студент с login={login} не найден!");
     }
 
-    // POST api/<StudentsController>
+    // POST api/students
     [HttpPost]
     public async Task<ActionResult> Post([FromBody] Students student)
     {
@@ -66,15 +95,16 @@ public class StudentsController : Controller
         return Created($"{this.HttpContext.Request.PathBase}/api/students/{result.Result}", null);
     }
 
-    // PUT api/<StudentsController>/5
-    [HttpPut("{id}")]
-    public async Task<ActionResult> Put(Students student)
+    // PUT api/students/{id}
+    [HttpPut("{id:guid}")]
+    public async Task<ActionResult> Put(Guid id, [FromBody] Students student)
     {
         if (student?.Name == null)
         {
             return BadRequest("Студент не передан или его имя пустое");
         }
 
+        student.StudentId = id;
         var result = await this.studentsRepository.EditStudent(student);
         if (result is ElementNotFound error)
             return BadRequest(error.ErrorMessage);
@@ -82,8 +112,8 @@ public class StudentsController : Controller
         return Ok();
     }
 
-    // DELETE api/<StudentsController>/5
-    [HttpDelete("{id}")]
+    // DELETE api/students/{id}
+    [HttpDelete("{id:guid}")]
     public async Task<ActionResult> Delete(Guid id)
     {
         var result = await this.studentsRepository.DeleteStudent(id);

@@ -91,3 +91,4 @@ D:\PROJECTS\BigStundetsDiary\BigStudentsDiary.WebAPI\bin\Debug\net7.0\runtimes\w
 D:\PROJECTS\BigStundetsDiary\BigStudentsDiary.WebAPI\bin\Debug\net7.0\BigStudentsDiary.Infrastructure.dll
 D:\PROJECTS\BigStundetsDiary\BigStudentsDiary.WebAPI\bin\Debug\net7.0\BigStudentsDiary.Infrastructure.pdb
 D:\PROJECTS\BigStundetsDiary\BigStudentsDiary.WebAPI\bin\Debug\net7.0\Swashbuckle.AspNetCore.Annotations.dll
+D:\PROJECTS\BigStundetsDiary\BigStudentsDiary.WebAPI\bin\Debug\net7.0\BCrypt.Net-Next.dll

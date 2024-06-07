@@ -12,8 +12,8 @@ export class TimetableFormComponent implements OnInit {
   constructor(public service: TimetableService) {
   }
 
-  ngOnInit(groupId: number): void {
-    this.service.refreshList(groupId);
+  ngOnInit(): void {
+    this.service.refreshList(-490224733);
   }
 
   OnSubmit(form: NgForm) {

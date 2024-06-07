@@ -9,7 +9,8 @@ public interface IStudentsRepository
     /// Возвращает список всех студентов, соответствующих условию, заданному функцией
     /// </summary>
     Task<IOperationResult<IEnumerable<Students>>> GetAllAsync(Func<Students, bool> selectFunc = null);
-
+    
+   
     /// <summary>
     /// Добавляет студента из переданного параметра
     /// </summary>
@@ -27,4 +28,8 @@ public interface IStudentsRepository
     /// </summary>
     /// <param name="id">Id студента, которого надо удалить</param>
     Task<IOperationResult> DeleteStudent(Guid id);
+
+    Task<Students> GetByLoginAsync(string login);
+
+
 }

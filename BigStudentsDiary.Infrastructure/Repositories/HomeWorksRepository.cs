@@ -2,33 +2,28 @@ using BigStudentsDiary.Core.Implementations;
 using BigStudentsDiary.Core.Interfaces;
 using BigStudentsDiary.Domain.Interfaces;
 using BigStudentsDiary.Domain.Models;
+using BigStudentsDiary.Infrastructure.CreationObjectFromSql;
 using Microsoft.Data.SqlClient;
 
-namespace BigStudentsDiary.Infrastructure;
+namespace BigStudentsDiary.Infrastructure.Repositories;
 
-public class HomeWorksRepository : IHomeWorksRepository
+public class HomeWorksRepository : RepositoryBase, IHomeWorksRepository
 {
-    private readonly string connectionStringName = "MainConnectionString";
-    readonly IConfiguration configuration;
-
-
-    public HomeWorksRepository(IConfiguration configuration)
+    public HomeWorksRepository(IConfiguration configuration) : base(configuration)
     {
-        this.configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
+
     public async Task<IOperationResult<IEnumerable<HomeWorks>>> GetAllAsync(Func<HomeWorks, bool> selectFunc = null)
     {
-        var result = await this.ExecuteQueryAsync("SELECT * FROM [Homework]");
+        var result = await ExecuteQueryAsync<HomeWorks, HomeWorkCreator>("SELECT * FROM [Homework]");
 
         if (selectFunc == null)
         {
-            return new Success<IEnumerable<HomeWorks>>(result); 
+            return new Success<IEnumerable<HomeWorks>>(result);
         }
         else
         {
-            return
-                new Success<IEnumerable<HomeWorks>>(
-                    result.Where(selectFunc)); 
+            return new Success<IEnumerable<HomeWorks>>(result.Where(selectFunc));
         }
     }
 
@@ -41,76 +36,48 @@ public class HomeWorksRepository : IHomeWorksRepository
 
         var id = Guid.NewGuid();
         await this.ExecuteNonQueryAsync(
-            $"INSERT INTO [Homework] (HomeWorkDiscription, HomeWorkID ) VALUES ('{homeWork.HomeWorkDiscription}','{id}')");
+            $"INSERT INTO [Homework] (HomeWorkDescription, HomeWorkID) VALUES ('{homeWork.HomeWorkDescription}','{id}')");
+            // new SqlParameter("@homeWorkDescription", homeWork.HomeWorkDescription),
+            // new SqlParameter("@homeWorkID", id));
+
         return new Success<Guid>(id);
     }
 
     public async Task<IOperationResult> EditHomeWork(HomeWorks homeWork)
     {
+        
         if (homeWork == null)
             throw new ArgumentNullException(nameof(homeWork));
 
-        var existing =
-            (await this.ExecuteQueryAsync($"SELECT * FROM [Homework] WHERE HomeWorkID='{homeWork.HomeWorkId}'"))
-            .FirstOrDefault();
+        var existing = (await this.ExecuteQueryAsync<Students, StudentCreator>(
+            "SELECT * FROM Students WHERE StudentId = @id", new SqlParameter("@id", homeWork.HomeWorkId))).FirstOrDefault();
 
         if (existing == null)
-            return new ElementNotFound($"Дз с id {homeWork.HomeWorkId} не найден");
+            return new ElementNotFound($"Студент с id {homeWork.HomeWorkId} не найден");
+        
 
-        existing.HomeWorkDiscription = homeWork.HomeWorkDiscription;
-
-
-        await this.ExecuteNonQueryAsync(
-            $"UPDATE [Homework] SET HomeWorkDiscription='{existing.HomeWorkDiscription}' WHERE HomeWorkID= '{existing.HomeWorkId}'");
+        await ExecuteNonQueryAsync(
+            $"UPDATE [Homework] SET HomeWorkDescription='{homeWork.HomeWorkDescription}' WHERE HomeWorkID= '{homeWork.HomeWorkId}'");
+            // new SqlParameter("@HomeWorkDescription", homeWork.HomeWorkDescription),
+            // new SqlParameter("@HomeWorkID", homeWork.HomeWorkId));
 
         return new Success();
     }
 
+
+
     public async Task<IOperationResult> DeleteHomeWork(Guid id)
     {
-        var existing = (await this.ExecuteQueryAsync($"SELECT * FROM [Homework] WHERE HomeWorkID='{id}'"))
-            .FirstOrDefault();
+        var existing = (await ExecuteQueryAsync<HomeWorks, HomeWorkCreator>(
+            "SELECT * FROM [Homework] WHERE HomeWorkID = @HomeWorkID",
+            new SqlParameter("@HomeWorkID", id))).FirstOrDefault();
 
         if (existing == null)
             return new ElementNotFound($"Не найдена ДЗ с id {id}");
 
-        await this.ExecuteNonQueryAsync($"DELETE FROM [Homework] WHERE HomeWorkID='{id}'");
+        await ExecuteNonQueryAsync("DELETE FROM [Homework] WHERE HomeWorkID = @HomeWorkID",
+            new SqlParameter("@HomeWorkID", id));
 
         return new Success();
-    }
-
-    private async Task ExecuteNonQueryAsync(string sql)
-    {
-        using (var connection = new SqlConnection(
-                   this.configuration.GetConnectionString(connectionStringName)))
-        {
-            connection.Open();
-            using (var command = new SqlCommand(sql, connection))
-                await command.ExecuteNonQueryAsync();
-        }
-    }
-
-    private async Task<IEnumerable<HomeWorks>> ExecuteQueryAsync(string sql)
-    {
-        var result = new List<HomeWorks>();
-        using (var connection = new SqlConnection(
-                   this.configuration.GetConnectionString(connectionStringName)))
-        {
-            connection.Open();
-            using (var command = new SqlCommand(sql, connection))
-            {
-                var reader = await command.ExecuteReaderAsync();
-                while (reader.Read())
-                {
-                    result.Add(new HomeWorks
-                    {
-                        HomeWorkId = Guid.Parse(reader["HomeWorkId"].ToString()),
-                        HomeWorkDiscription = reader["HomeWorkDiscription"].ToString(),
-                    });
-                }
-            }
-        }
-
-        return result;
     }
 }
