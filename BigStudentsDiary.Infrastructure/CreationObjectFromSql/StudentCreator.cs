@@ -1,6 +1,6 @@
 using BigStudentsDiary.Domain.Models;
 using Microsoft.Data.SqlClient;
-using Npgsql;
+
 
 namespace BigStudentsDiary.Infrastructure.CreationObjectFromSql;
 

@@ -38,6 +38,26 @@ public class JwtProvider : IJwtProvider
         var tokenValue = new JwtSecurityTokenHandler().WriteToken(token);
         return tokenValue;
     }
+
+    public string GenerateToken(Teachers teacher)
+    {
+        var claims = new[]
+        {
+            new Claim("teacherId", teacher.TeacherInternalId.ToString()),
+        };
+
+        var signingCredentials =
+            new SigningCredentials(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SecretKey)),
+                SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            claims: claims,
+            signingCredentials: signingCredentials,
+            expires: DateTime.UtcNow.AddHours(_options.ExpiresHours));
+
+        var tokenValue = new JwtSecurityTokenHandler().WriteToken(token);
+        return tokenValue; 
+    }
 }
 
 

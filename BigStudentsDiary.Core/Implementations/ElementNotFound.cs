@@ -2,8 +2,8 @@ namespace BigStudentsDiary.Core.Implementations;
 
 public class ElementNotFound<T> : BaseResult<T> where T : class
 {
-    public ElementNotFound(T element, string errorMessage)
-        : base(element, false, errorMessage)
+    public ElementNotFound( string errorMessage)
+        : base(null, false, errorMessage)
     {
         if (string.IsNullOrEmpty(errorMessage))
             this.ErrorMessage = $"Элемент типа {typeof(T)} не найден";

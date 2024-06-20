@@ -27,4 +27,7 @@ public interface ITeachersRepository
     /// </summary>
     /// <param name="id">Id Преподавателя, которого надо удалить</param>
     Task<IOperationResult> DeleteTeacher(Guid id);
+    
+    
+    Task<Teachers> GetByLoginAsync(string login);
 }

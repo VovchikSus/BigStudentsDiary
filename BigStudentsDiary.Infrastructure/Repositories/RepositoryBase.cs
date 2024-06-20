@@ -1,10 +1,7 @@
-using BigStudentsDiary.Core.Implementations;
-using BigStudentsDiary.Core.Interfaces;
-using BigStudentsDiary.Domain.Interfaces;
 using BigStudentsDiary.Infrastructure.CreationObjectFromSql;
 using Microsoft.Data.SqlClient;
 
-namespace BigStudentsDiary.Infrastructure;
+namespace BigStudentsDiary.Infrastructure.Repositories;
 
 public abstract class RepositoryBase
 {

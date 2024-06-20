@@ -1,7 +1,7 @@
 using BigStudentsDiary.Core.Interfaces;
 using BigStudentsDiary.Domain.Models;
 
-namespace BigStudentsDiary.Domain.Interfaces;
+namespace BigStudentsDiary.Domain.Interfaces.IRepositories;
 
 public interface IStudentsRepository
 {

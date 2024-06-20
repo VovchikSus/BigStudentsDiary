@@ -1,3 +1,4 @@
+using System.Web;
 using BigStudentsDiary.Core.Implementations;
 using BigStudentsDiary.Domain.Interfaces;
 using BigStudentsDiary.Domain.Models;
@@ -37,11 +38,15 @@ namespace BigStudentsDiary.WebAPI.Controllers
         [HttpGet("code/{groupCode}")]
         public async Task<ActionResult> GetByCode(string groupCode)
         {
-            var result = await this._groupRepository.GetByGroupCodeAsync(groupCode);
-            if (result.Result != null)
-                return Ok(result);
+            var decodedGroupCode = HttpUtility.UrlDecode(groupCode);
+            Console.WriteLine($"Decoded GroupCode: {decodedGroupCode}"); // Логирование
 
-            return BadRequest($"Группа с кодом {groupCode} не найдена!");
+            var result = await this._groupRepository.GetByGroupCodeAsync(decodedGroupCode);
+
+            if (result is ElementNotFound<Groups> error)
+                return NotFound(error.ErrorMessage);
+
+            return Ok(result.Result);
         }
 
         // POST api/<GroupsController>

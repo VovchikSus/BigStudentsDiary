@@ -73,6 +73,13 @@ public class TeachersRepository : RepositoryBase, ITeachersRepository
         return new Success();
     }
 
+    public async Task<Teachers> GetByLoginAsync(string login)
+    {
+        var result = await this.ExecuteQueryAsync<Teachers, TeacherCreator>(
+            "SELECT * FROM Teachers WHERE TeacherLogin = @login", new SqlParameter("@login", login));
+        return result.FirstOrDefault();
+    }
+
     public async Task<IOperationResult<IEnumerable<Teachers>>> GetAllAsync(Func<Teachers, bool> selectFunc = null)
     {
         var result = await ExecuteQueryAsync<Teachers, TeacherCreator>("SELECT * FROM [Teachers]");

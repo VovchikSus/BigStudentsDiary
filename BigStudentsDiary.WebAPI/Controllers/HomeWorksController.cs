@@ -1,5 +1,6 @@
 using BigStudentsDiary.Core.Implementations;
 using BigStudentsDiary.Domain.Interfaces;
+using BigStudentsDiary.Domain.Interfaces.IRepositories;
 using BigStudentsDiary.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -31,7 +32,7 @@ public class HomeWorksController : Controller
         return BadRequest($"ДЗ с таким id={id} не найден!");
     }
 
-    // POST api/<HomeWorksController>
+    // POST api/homeworks
     [HttpPost]
     public async Task<ActionResult> Post([FromBody] HomeWorks homeWorks)
     {

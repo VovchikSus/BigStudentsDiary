@@ -4,17 +4,18 @@ namespace BigStudentsDiary.Domain.Models;
 
 public class HomeWorks
 {
-    private HomeWorks(Guid homeWorkId, string homeWorkDescription)
+    private HomeWorks(string homeWorkDescription, Guid homeWorkId)
     {
-        HomeWorkId = homeWorkId;
         HomeWorkDescription = homeWorkDescription;
+        HomeWorkId = homeWorkId;
     }
 
-    public Guid HomeWorkId { get; set; }
-    public string HomeWorkDescription { get; set; } = "";
 
-    public static HomeWorks Create(Guid homeWorkId, string homeWorkDescription)
+    public string HomeWorkDescription { get; set; } = "";
+    public Guid HomeWorkId { get; set; }
+
+    public static HomeWorks Create(string homeWorkDescription, Guid homeWorkId)
     {
-        return new HomeWorks(homeWorkId, homeWorkDescription);
+        return new HomeWorks(homeWorkDescription, homeWorkId);
     }
 }

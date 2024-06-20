@@ -1,7 +1,7 @@
 using BigStudentsDiary.Core.Interfaces;
 using BigStudentsDiary.Domain.Models;
 
-namespace BigStudentsDiary.Domain.Interfaces;
+namespace BigStudentsDiary.Domain.Interfaces.IRepositories;
 
 public interface IHomeWorksRepository
 {
@@ -13,13 +13,13 @@ public interface IHomeWorksRepository
     /// <summary>
     /// Добавляет преподавателя из переданного параметра
     /// </summary>
-    /// <param name="homeWorks">Домашнее задание</param>
+    /// <param name="homeWork">Домашнее задание</param>
     Task<IOperationResult<Guid>> AddHomeWork(HomeWorks homeWork);
 
     /// <summary>
     /// Изменяет преподавателя из переданного параметра
     /// </summary>
-    /// <param name="homeWorks">Данные для изменения Дз</param>
+    /// <param name="homeWork">Данные для изменения Дз</param>
     Task<IOperationResult> EditHomeWork(HomeWorks homeWork);
 
     /// <summary>

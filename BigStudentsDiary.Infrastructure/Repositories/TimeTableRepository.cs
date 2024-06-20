@@ -3,6 +3,7 @@ using BigStudentsDiary.Core.Interfaces;
 using BigStudentsDiary.Domain.Interfaces;
 using BigStudentsDiary.Domain.Models;
 using BigStudentsDiary.Infrastructure.CreationObjectFromSql;
+using BigStudentsDiary.Infrastructure.Repositories;
 using Microsoft.Data.SqlClient;
 
 namespace BigStudentsDiary.Infrastructure;

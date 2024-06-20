@@ -9,13 +9,13 @@ public static class StudentEndPoints
 {
     public static IEndpointRouteBuilder MapStudentEndPoints(this IEndpointRouteBuilder app)
     {
-        app.MapPost("/register", Register)
+        app.MapPost("/student/register", Register)
             .WithName("RegisterStudent")
             .WithTags("Student")
             .Produces(StatusCodes.Status200OK)
             .Produces(StatusCodes.Status400BadRequest);
 
-        app.MapPost("/login", Login)
+        app.MapPost("/student/login", Login)
             .WithName("LoginStudent")
             .WithTags("Student")
             .Produces(StatusCodes.Status200OK)

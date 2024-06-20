@@ -1,13 +1,12 @@
 using BigStudentsDiary.Core.Implementations;
 using BigStudentsDiary.Core.Interfaces;
 using BigStudentsDiary.Domain.Interfaces;
+using BigStudentsDiary.Domain.Interfaces.IRepositories;
 using BigStudentsDiary.Domain.Models;
 using BigStudentsDiary.Infrastructure.CreationObjectFromSql;
 using Microsoft.Data.SqlClient;
-using Microsoft.Extensions.Configuration;
-using Npgsql;
 
-namespace BigStudentsDiary.Infrastructure;
+namespace BigStudentsDiary.Infrastructure.Repositories;
 
 public class StudentsRepository : RepositoryBase, IStudentsRepository
 {
@@ -51,7 +50,8 @@ public class StudentsRepository : RepositoryBase, IStudentsRepository
             throw new ArgumentNullException(nameof(student));
 
         var existing = (await this.ExecuteQueryAsync<Students, StudentCreator>(
-            "SELECT * FROM Students WHERE StudentId = @id", new SqlParameter("@id", student.StudentId))).FirstOrDefault();
+                "SELECT * FROM Students WHERE StudentId = @id", new SqlParameter("@id", student.StudentId)))
+            .FirstOrDefault();
 
         if (existing == null)
             return new ElementNotFound($"Студент с id {student.StudentId} не найден");
@@ -89,53 +89,3 @@ public class StudentsRepository : RepositoryBase, IStudentsRepository
         return result.FirstOrDefault();
     }
 }
-
-    // private async Task ExecuteNonQueryAsync(string sql)
-    // {
-    //     using (var connection = new SqlConnection(this.configuration.GetConnectionString(connectionStringName)))
-    //     {
-    //         await connection.OpenAsync();
-    //         using (var command = new SqlCommand(sql, connection))
-    //         {
-    //             await command.ExecuteNonQueryAsync();
-    //         }
-    //     }
-    // }
-
-    // private async Task<IEnumerable<Students>> ExecuteQueryAsync(string sql, object parameters = null)
-    // {
-    //     var result = new List<Students>();
-    //     using (var connection = new SqlConnection(this.configuration.GetConnectionString(connectionStringName)))
-    //     {
-    //         await connection.OpenAsync();
-    //         using (var command = new SqlCommand(sql, connection))
-    //         {
-    //             if (parameters != null)
-    //             {
-    //                 var properties = parameters.GetType().GetProperties();
-    //                 foreach (var prop in properties)
-    //                 {
-    //                     command.Parameters.AddWithValue("@" + prop.Name, prop.GetValue(parameters));
-    //                 }
-    //             }
-    //
-    //             using (var reader = await command.ExecuteReaderAsync())
-    //             {
-    //                 while (await reader.ReadAsync())
-    //                 {
-    //                     result.Add(Students.Create(
-    //                         reader.GetGuid(reader.GetOrdinal("StudentID")),
-    //                         reader.GetString(reader.GetOrdinal("Name")),
-    //                         reader.GetString(reader.GetOrdinal("Surname")),
-    //                         reader.GetString(reader.GetOrdinal("StudentLogin")),
-    //                         reader.GetString(reader.GetOrdinal("StudentPassword")),
-    //                         reader.GetInt32(reader.GetOrdinal("GroupId"))
-    //                     ));
-    //                 }
-    //             }
-    //         }
-    //     }
-    //
-    //     return result;
-    // }
-    

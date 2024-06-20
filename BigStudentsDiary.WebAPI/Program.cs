@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Serilog;
 using System.Text;
+using BigStudentsDiary.Domain.Interfaces.IRepositories;
 using BigStudentsDiary.Infrastructure.Repositories;
 using BigStudentsDiary.WebAPI.Extensions;
 using Microsoft.AspNetCore.CookiePolicy;
@@ -31,12 +32,18 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddSingleton<IStudentsRepository, StudentsRepository>();
 builder.Services.AddSingleton<ITeachersRepository, TeachersRepository>();
 builder.Services.AddSingleton<IHomeWorksRepository, HomeWorksRepository>();
+builder.Services.AddSingleton<IFloorRepository, FloorRepository>();
 builder.Services.AddSingleton<ITimeTableRepository, TimeTableRepository>();
 builder.Services.AddSingleton<IGroupRepository, GroupsRepository>();
+builder.Services.AddSingleton<IDepartmentRepository, DepartmentRepository>();
+builder.Services.AddSingleton<IDisciplinesRepository, DisciplinesRepository>();
+builder.Services.AddSingleton<IBuildingRepository, BuildingRepository>();
+builder.Services.AddSingleton<IRoomRepository, RoomRepository>();
 builder.Services.AddSingleton<IJwtProvider, JwtProvider>();
-builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
+builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>(); 
 builder.Services.AddSingleton<StudentsService>();
-
+builder.Services.AddSingleton<TeachersService>();
+builder.Services.AddSingleton<TimeTableService>();
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtOptions")); 
 
 builder.Services.AddSingleton<ExceptionMiddleware>();
@@ -71,5 +78,6 @@ app.UseMiddleware<ExceptionMiddleware>();
 
 app.MapControllers();
 app.MapStudentEndPoints();
+app.MapTeacherEndPoints();
 
 app.Run();

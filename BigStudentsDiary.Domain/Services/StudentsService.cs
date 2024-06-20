@@ -1,5 +1,6 @@
 using BigStudentsDiary.Domain.Interfaces;
 using BigStudentsDiary.Domain.Interfaces.Auth;
+using BigStudentsDiary.Domain.Interfaces.IRepositories;
 using BigStudentsDiary.Domain.Models;
 
 namespace BigStudentsDiary.Domain.Services;

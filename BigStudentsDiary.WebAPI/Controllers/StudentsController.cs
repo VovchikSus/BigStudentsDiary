@@ -1,5 +1,6 @@
 using BigStudentsDiary.Core.Implementations;
 using BigStudentsDiary.Domain.Interfaces;
+using BigStudentsDiary.Domain.Interfaces.IRepositories;
 using BigStudentsDiary.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -9,18 +10,18 @@ namespace BigStudentsDiary.WebAPI.Controllers;
 [ApiController]
 public class StudentsController : Controller
 {
-    private readonly IStudentsRepository studentsRepository;
+    private readonly IStudentsRepository _studentsRepository;
     
     public StudentsController(IStudentsRepository repository)
     {
-        this.studentsRepository = repository;
+        this._studentsRepository = repository;
     }
 
     // GET: api/students
     [HttpGet]
     public async Task<ActionResult> Get()
     {
-        var result = await this.studentsRepository.GetAllAsync();
+        var result = await this._studentsRepository.GetAllAsync();
         return Ok(result);
     }
     
@@ -28,7 +29,7 @@ public class StudentsController : Controller
     [HttpGet("{id:guid}")]
     public async Task<ActionResult> GetById(Guid id)
     {
-        var result = await this.studentsRepository.GetAllAsync(x => x.StudentId == id);
+        var result = await this._studentsRepository.GetAllAsync(x => x.StudentId == id);
         if (result.Result.Any())
             return Ok(result);
 
@@ -54,7 +55,7 @@ public class StudentsController : Controller
     [HttpGet("login/{login}")]
     public async Task<ActionResult> GetByLogin(string login)
     {
-        var result = await this.studentsRepository.GetAllAsync(x => x.StudentLogin == login);
+        var result = await this._studentsRepository.GetAllAsync(x => x.StudentLogin == login);
         if (result.Result.Any())
             return Ok(result);
 
@@ -90,7 +91,7 @@ public class StudentsController : Controller
             return BadRequest("Студент не передан или его группа пустая");
         }
 
-        var result = await this.studentsRepository.AddStudent(student);
+        var result = await this._studentsRepository.AddStudent(student);
 
         return Created($"{this.HttpContext.Request.PathBase}/api/students/{result.Result}", null);
     }
@@ -105,7 +106,7 @@ public class StudentsController : Controller
         }
 
         student.StudentId = id;
-        var result = await this.studentsRepository.EditStudent(student);
+        var result = await this._studentsRepository.EditStudent(student);
         if (result is ElementNotFound error)
             return BadRequest(error.ErrorMessage);
 
@@ -116,7 +117,7 @@ public class StudentsController : Controller
     [HttpDelete("{id:guid}")]
     public async Task<ActionResult> Delete(Guid id)
     {
-        var result = await this.studentsRepository.DeleteStudent(id);
+        var result = await this._studentsRepository.DeleteStudent(id);
         if (result is ElementNotFound error)
             return BadRequest(error.ErrorMessage);
 
