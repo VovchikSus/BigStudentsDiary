@@ -24,7 +24,7 @@ public class StudentsService
     {
         var hashedPassword = _passwordHasher.Generate(studentPassword);
         var student = Students.Create(Guid.NewGuid(), studentName, studentSurname, studentLogin, hashedPassword,
-            groupId); // Используйте hashedPassword
+            groupId); 
 
         await _studentRepository.AddStudent(student);
     }

@@ -26,13 +26,24 @@ public class TimeTableController : Controller
     public async Task<ActionResult<IEnumerable<FullTimeTableDto>>> GetFullTimeTableByGroup(
         DateTime dayDate)
     {
-        var groupIdClaim = User.Claims.FirstOrDefault(c => c.Type == "groupId");
-        if (groupIdClaim == null || !int.TryParse(groupIdClaim.Value, out var groupId))
+        try 
         {
-            return Unauthorized();
+            Console.WriteLine($"Запрос получен: {dayDate}");
+            var groupIdClaim = User.Claims.FirstOrDefault(c => c.Type == "groupId");
+            if (groupIdClaim == null || !int.TryParse(groupIdClaim.Value, out var groupId))
+            {
+                Console.WriteLine("Ошибка: groupId не найден");
+                return Unauthorized();
+            }
+            var fullTimeTable = await _timeTableService.GetFullTimeTableByGroup(groupId, dayDate);
+            Console.WriteLine($"Результат: {fullTimeTable.Count()} записей");
+            return Ok(fullTimeTable);
         }
-        var fullTimeTable = await _timeTableService.GetFullTimeTableByGroup(groupId, dayDate);
-        return Ok(fullTimeTable);
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ошибка: {ex}");
+            return StatusCode(500);
+        }
     }
     
     
