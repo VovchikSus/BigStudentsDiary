@@ -3,14 +3,22 @@ import 'package:flutter_localizations/flutter_localizations.dart'; // Добав
 import 'package:intl/date_symbol_data_local.dart'; // Добавляем импорт
 import 'package:timetableapp/pages/auth_page.dart';
 import 'package:timetableapp/pages/auths_page.dart';
+import 'package:timetableapp/pages/knowledge_graph_page.dart';
 import 'package:timetableapp/pages/main_page.dart';
+import 'package:timetableapp/pages/notifications_page.dart';
 import 'package:timetableapp/pages/timetable_page.dart';
 import 'package:timetableapp/pages/user_profile.dart';
+import 'package:timetableapp/services/notification_service.dart';
+import 'package:timetableapp/services/websocket_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Обязательно для асинхронной инициализации
   await initializeDateFormatting('ru_RU', null); // Инициализация русской локализации
+  await NotificationService().init();
+
+
   runApp(MyApp());
+
 }
 
 class MyApp extends StatelessWidget {
@@ -41,6 +49,8 @@ class MyApp extends StatelessWidget {
         '/auths': (context) => AuthPageWidget(),
         '/timetable': (context) => TimetablePageWidget(),
         '/user_profile': (context) => ProfileWidget(),
+        '/knowledgeGraph':(context)=>KnowledgeGraphPage(),
+        '/notifications': (context) => NotificationsScreen()
       },
     );
   }

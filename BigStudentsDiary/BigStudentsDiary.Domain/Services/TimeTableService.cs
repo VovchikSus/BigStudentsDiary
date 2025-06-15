@@ -31,13 +31,11 @@ public class TimeTableService
         {
             throw new Exception("Failed to get timetable");
         }
-
         var timetable = timetableResult.Result;
         var disciplineIds = timetable.Select(tt => tt.DisciplineId).Distinct();
         var departmentIds = timetable.Select(tt => tt.DepartmentId).Distinct();
         var roomIds = timetable.Select(tt => tt.RoomId).Distinct();
         var buildingIds = timetable.Select(tt => tt.BuildingId).Distinct();
-
         var disciplinesResult = await _disciplinesRepository.GetAllAsync(d => disciplineIds.Contains(d.DisciplineId));
         var departmentsResult = await _departmentRepository.GetAllAsync(d => departmentIds.Contains(d.DepartmentId));
         var roomsResult = await _roomRepository.GetAllAsync(r => roomIds.Contains(r.RoomId));
@@ -109,7 +107,6 @@ public class TimeTableService
         var departmentIds = timetable.Select(tt => tt.DepartmentId).Distinct();
         var roomIds = timetable.Select(tt => tt.RoomId).Distinct();
         var buildingIds = timetable.Select(tt => tt.BuildingId).Distinct();
-
         var disciplinesResult = await _disciplinesRepository.GetAllAsync(d => disciplineIds.Contains(d.DisciplineId));
         var departmentsResult = await _departmentRepository.GetAllAsync(d => departmentIds.Contains(d.DepartmentId));
         var roomsResult = await _roomRepository.GetAllAsync(r => roomIds.Contains(r.RoomId));

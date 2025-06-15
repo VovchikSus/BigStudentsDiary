@@ -9,7 +9,6 @@ public interface IStudentsRepository
     /// Возвращает список всех студентов, соответствующих условию, заданному функцией
     /// </summary>
     Task<IOperationResult<IEnumerable<Students>>> GetAllAsync(Func<Students, bool> selectFunc = null);
-    
    
     /// <summary>
     /// Добавляет студента из переданного параметра

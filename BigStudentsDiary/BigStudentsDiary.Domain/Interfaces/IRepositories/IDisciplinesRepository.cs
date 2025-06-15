@@ -9,4 +9,7 @@ public interface IDisciplinesRepository
     /// Возвращает список всех дисциплин, соответствующих условию, заданному функцией
     /// </summary>
     Task<IOperationResult<IEnumerable<Disciplines>>> GetAllAsync(Func<Disciplines, bool> selectFunc = null);
+    
+    Task<IOperationResult<IEnumerable<DisciplineInfo>>> GetDisciplinesByGroup(int groupId);
+    Task<Disciplines?> GetDisciplineIdByName(string disciplineName);
 }

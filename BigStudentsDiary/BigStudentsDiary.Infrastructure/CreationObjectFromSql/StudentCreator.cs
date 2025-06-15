@@ -9,7 +9,7 @@ public class StudentCreator : ICreator<Students>
     public Students Map(SqlDataReader reader)
     {
         return Students.Create(
-            Guid.Parse(reader["StudentId"].ToString()),    // Преобразование значения GUID из строки
+            Guid.Parse(reader["StudentId"].ToString()),   
             reader["Name"].ToString(),
             reader["Surname"].ToString(),
             reader["StudentLogin"].ToString(),

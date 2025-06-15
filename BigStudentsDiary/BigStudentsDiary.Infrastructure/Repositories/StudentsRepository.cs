@@ -18,31 +18,20 @@ public class StudentsRepository : RepositoryBase, IStudentsRepository
     {
         if (student == null)
             throw new ArgumentNullException(nameof(student));
-
-        var id = Guid.NewGuid();
         await this.ExecuteNonQueryAsync(
-            "INSERT INTO Students (studentId, name, surname, studentLogin, studentPassword, groupID) VALUES (@id, @name, @surname, @studentLogin, @studentPassword, @groupID)",
-            new SqlParameter("@id", id),
+            "INSERT INTO Students (studentId, name, surname, studentLogin, studentPassword, groupID) " +
+            "VALUES (@id, @name, @surname, @studentLogin, @studentPassword, @groupID)",
+            new SqlParameter("@id", student.StudentId),
             new SqlParameter("@name", student.Name),
             new SqlParameter("@surname", student.Surname),
             new SqlParameter("@studentLogin", student.StudentLogin),
             new SqlParameter("@studentPassword", student.StudentPassword),
             new SqlParameter("@groupID", student.GroupId));
 
-        return new Success<Guid>(id);
+        return new Success<Guid>(student.StudentId);
     }
 
-    public async Task<IOperationResult> DeleteStudent(Guid id)
-    {
-        var existing = (await this.ExecuteQueryAsync<Students, StudentCreator>(
-            "SELECT * FROM Students WHERE StudentId = @id", new SqlParameter("@id", id))).FirstOrDefault();
-
-        if (existing == null)
-            return new ElementNotFound($"Не найден студент с id {id}");
-
-        await this.ExecuteNonQueryAsync("DELETE FROM Students WHERE StudentId = @id", new SqlParameter("@id", id));
-        return new Success();
-    }
+    
 
     public async Task<IOperationResult> EditStudent(Students student)
     {
@@ -68,6 +57,20 @@ public class StudentsRepository : RepositoryBase, IStudentsRepository
         return new Success();
     }
 
+    
+    public async Task<IOperationResult> DeleteStudent(Guid id)
+    {
+        var existing = (await this.ExecuteQueryAsync<Students, StudentCreator>(
+            "SELECT * FROM Students WHERE StudentId = @id", new SqlParameter("@id", id))).FirstOrDefault();
+
+        if (existing == null)
+            return new ElementNotFound($"Не найден студент с id {id}");
+
+        await this.ExecuteNonQueryAsync("DELETE FROM Students WHERE StudentId = @id", new SqlParameter("@id", id));
+        return new Success();
+    }
+    
+    
     public async Task<IOperationResult<IEnumerable<Students>>> GetAllAsync(Func<Students, bool> selectFunc = null)
     {
         var result = await ExecuteQueryAsync<Students, StudentCreator>("SELECT * FROM Students");

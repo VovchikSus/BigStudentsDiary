@@ -87,14 +87,19 @@
 
     <ItemGroup>
       <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+      <PackageReference Include="Dapper" Version="2.1.66" />
       <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.6" />
       <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.0" />
       <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="8.0.0" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
       <PackageReference Include="Npgsql" Version="8.0.3" />
     </ItemGroup>
 
 
     <ItemGroup>
+      <Reference Include="BigStudentsDiary.Domain">
+        <HintPath>..\BigStudentsDiary.Domain\bin\Debug\net8.0\BigStudentsDiary.Domain.dll</HintPath>
+      </Reference>
       <Reference Include="System.Reflection.TypeExtensions" />
     </ItemGroup>
 

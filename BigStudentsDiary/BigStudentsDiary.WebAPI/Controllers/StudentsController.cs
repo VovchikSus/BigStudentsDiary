@@ -36,20 +36,6 @@ public class StudentsController : Controller
         return NotFound($"Студент с id={id} не найден!");
     }
     
-    // [HttpGet("group")]
-    // public IActionResult GetGroup()
-    // {
-    //     var groupIdClaim = User.Claims.FirstOrDefault(c => c.Type == "groupId");
-    //     if (groupIdClaim == null)
-    //     {
-    //         return Unauthorized("GroupId not found in token");
-    //     }
-    //
-    //     var groupId = int.Parse(groupIdClaim.Value);
-    //     // Используйте groupId для выполнения запроса
-    //     var group = studentsRepository.GetGroupById(groupId);
-    //     return Ok(group);
-    // }
     
     // GET: api/students/login/{login}
     [HttpGet("login/{login}")]

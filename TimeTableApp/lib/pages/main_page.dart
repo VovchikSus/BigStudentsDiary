@@ -1,17 +1,17 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:dio/dio.dart';
+
+import '../constants/api_constants.dart';
 import '../models/timetable_model.dart';
+import '../utils/storage_helper.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-
-
-
+import '/services/notification_service.dart';
 
 class MainTimetableWidget extends StatefulWidget {
-  /// I need a page with a schedule for a university so that there would be a
-  /// navigator to go to the menu schedule profile main
   const MainTimetableWidget({super.key});
 
   @override
@@ -19,21 +19,240 @@ class MainTimetableWidget extends StatefulWidget {
 }
 
 class _MainTimetableWidgetState extends State<MainTimetableWidget> {
+  final NotificationService _notificationService = NotificationService();
   late TimetableModel _model;
-
   final scaffoldKey = GlobalKey<ScaffoldState>();
+  final Dio _dio = Dio();
+  Map<String, List<Map<String, dynamic>>> _schedule = {};
+  bool _isLoading = false;
+  DateTime _currentDate = DateTime.now();
+
 
   @override
   void initState() {
     super.initState();
+    _notificationService.init();
     _model = createModel(context, () => TimetableModel());
+    _loadSchedule();
   }
 
-  @override
-  void dispose() {
-    _model.dispose();
 
-    super.dispose();
+  Future<void> _loadSchedule() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+
+    final token = await StorageHelper.getToken();
+    if (token == null || token.isEmpty) {
+      if (mounted) {
+        setState(() => _isLoading = false); // Сбрасываем состояние перед навигацией
+        _navigateToAuth();
+      }
+      return;
+    }
+
+    try {
+      final today = DateFormat('yyyy-MM-dd').format(_currentDate);
+      final tomorrow = DateFormat('yyyy-MM-dd')
+          .format(_currentDate.add(const Duration(days: 1)));
+
+      final responses = await Future.wait([
+        _dio.get(ApiConstants.dateByDay(today),
+            options: Options(headers: ApiConstants.authHeaders(token))),
+            // options: Options(headers: {
+            //   'Authorization': 'Bearer $token',
+            //   'Content-Type': 'application/json',
+            // })),
+        _dio.get(ApiConstants.dateByDay(tomorrow),
+            options: Options(headers: ApiConstants.authHeaders(token)))
+            //options: Options(headers: {
+             // 'Authorization': 'Bearer $token',
+            //  'Content-Type': 'application/json',
+           // }))
+      ]);
+
+      if (!mounted) return;
+      setState(() {
+        _schedule = {
+          'today': (responses[0].data as List<dynamic>)
+              .map((e) => e as Map<String, dynamic>)
+              .toList(),
+          'tomorrow': (responses[1].data as List<dynamic>)
+              .map((e) => e as Map<String, dynamic>)
+              .toList(),
+        };
+      });
+    } on DioException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Ошибка: ${e.message}')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Неизвестная ошибка')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false); // Всегда сбрасываем флаг загрузки
+    }
+  }
+
+  Widget _buildNoLessonsCard() {
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(8, 0, 8, 0),
+      child: Material(
+        color: Colors.transparent,
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Container(
+          width: MediaQuery.sizeOf(context).width,
+          decoration: BoxDecoration(
+            color: FlutterFlowTheme.of(context).primaryBackground,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Занятий нет',
+                  style: FlutterFlowTheme.of(context).titleMedium.override(
+                    fontFamily: 'Inter Tight',
+                    color: FlutterFlowTheme.of(context).primary,
+                    letterSpacing: 0.0,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Icon(
+                  Icons.sentiment_satisfied_alt_outlined,
+                  color: FlutterFlowTheme.of(context).primary,
+                  size: 40,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _navigateToAuth() {
+    if (mounted) {
+      Navigator.pushReplacementNamed(context, '/auths');
+    }
+  }
+
+  String _getLessonStatus(Map<String, dynamic> lesson) {
+    final now = DateTime.now();
+
+    try {
+      // Парсим только время из формата HH:mm
+      final startTime = DateFormat('HH:mm').parse(lesson['timeStart']);
+      final endTime = DateFormat('HH:mm').parse(lesson['timeEnd']);
+
+      // Создаем DateTime с текущей датой и полученным временем
+      final start = DateTime(now.year, now.month, now.day, startTime.hour, startTime.minute);
+      final end = DateTime(now.year, now.month, now.day, endTime.hour, endTime.minute);
+
+      if (now.isAfter(end)) return 'Завершена';
+      if (now.isBefore(start)) return 'Скоро';
+      return 'Идет сейчас';
+    } catch (e) {
+      print('Ошибка парсинга времени: $e');
+      return 'Неизвестно';
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    return switch (status) {
+      'Завершена' => const Color(0xFFEF9A9A),
+      'Идет сейчас' => const Color(0xFFC8E6C9),
+      _ => const Color(0xFFFFF9C4),
+    };
+  }
+
+  Widget _buildLessonCard(Map<String, dynamic> lesson) {
+    final status = _getLessonStatus(lesson);
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(8, 0, 8, 0),
+      child: Material(
+        elevation: 2,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Container(
+          width: MediaQuery.sizeOf(context).width,
+          decoration: BoxDecoration(
+            color: FlutterFlowTheme.of(context).primaryBackground,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      lesson['discipline'],
+                      style: FlutterFlowTheme.of(context).titleMedium.override(
+                        fontFamily: 'Inter Tight',
+                        color: FlutterFlowTheme.of(context).primary,
+                        letterSpacing: 0.0,
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: _getStatusColor(status),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        status,
+                        style: TextStyle(
+                          color: status == 'Скоро'
+                              ? const Color(0xFFF57C00)
+                              : const Color(0xFF2E7D32),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.access_time, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${lesson['timeStart']} - ${lesson['timeEnd']}',
+                      style: FlutterFlowTheme.of(context).bodyMedium,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    const Icon(Icons.location_on, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${lesson['building']} корпус, ауд. ${lesson['room']}',
+                      style: FlutterFlowTheme.of(context).bodyMedium,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -44,14 +263,14 @@ class _MainTimetableWidgetState extends State<MainTimetableWidget> {
         key: scaffoldKey,
         backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
         body: SafeArea(
-          top: true,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
             children: [
+              // Header Section
               Container(
-                width: MediaQuery.sizeOf(context).width,
                 height: 180,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [Color(0xFF1A237E), Color(0xFF3F51B5)],
                     stops: [0, 1],
@@ -60,607 +279,70 @@ class _MainTimetableWidgetState extends State<MainTimetableWidget> {
                   ),
                 ),
                 child: Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(24, 24, 24, 0),
+                  padding: const EdgeInsetsDirectional.fromSTEB(24, 24, 24, 0),
                   child: Column(
-                    mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Главная',
-                        style: FlutterFlowTheme.of(context)
-                            .headlineMedium
-                            .override(
-                          fontFamily: 'Inter Tight',
-                          color: Colors.white,
-                          letterSpacing: 0.0,
-                          fontWeight: FontWeight.bold,
-                        ),
+                    Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Главная',
+                            style: FlutterFlowTheme.of(context)
+                                .headlineMedium
+                                .override(
+                              fontFamily: 'Inter Tight',
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          Text(
+                            'Весенний семестр',
+                            style: FlutterFlowTheme.of(context)
+                                .bodyLarge
+                                .override(color: const Color(0xFFE0E0E0)),
+                          )],
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.notifications_none,
+                                color: Colors.white, size: 28),
+                            onPressed: () {
+                              Navigator.pushNamed(context, '/notifications');
+                            },
+                          ),
+                        ],
                       ),
-                      Text(
-                        'Весенний семестр',
-                        style: FlutterFlowTheme.of(context).bodyLarge.override(
-                          fontFamily: 'Inter',
-                          color: Color(0xFFE0E0E0),
-                          letterSpacing: 0.0,
-                        ),
-                      ),
-                    ].divide(SizedBox(height: 8)),
+                    ],
                   ),
                 ),
               ),
+              // Schedule Content
               Expanded(
                 child: Container(
                   width: MediaQuery.sizeOf(context).width,
                   decoration: BoxDecoration(
                     color: FlutterFlowTheme.of(context).secondaryBackground,
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(0),
-                      bottomRight: Radius.circular(0),
+                    borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(32),
-                      topRight: Radius.circular(0),
                     ),
                   ),
                   child: Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(24, 24, 24, 0),
+                    padding: const EdgeInsetsDirectional.fromSTEB(24, 24, 24, 0),
                     child: SingleChildScrollView(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(8, 0, 8, 0),
-                            child: Text(
-                              'Сегодня',
-                              style: FlutterFlowTheme.of(context)
-                                  .headlineSmall
-                                  .override(
-                                fontFamily: 'Inter Tight',
-                                letterSpacing: 0.0,
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(8, 0, 8, 0),
-                            child: Material(
-                              color: Colors.transparent,
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Container(
-                                width: MediaQuery.sizeOf(context).width,
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context)
-                                      .primaryBackground,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      16, 16, 16, 16),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Row(
-                                        mainAxisSize: MainAxisSize.max,
-                                        mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            'Высшая математика',
-                                            style: FlutterFlowTheme.of(context)
-                                                .titleMedium
-                                                .override(
-                                              fontFamily: 'Inter Tight',
-                                              color: FlutterFlowTheme.of(
-                                                  context)
-                                                  .primary,
-                                              letterSpacing: 0.0,
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding:
-                                            EdgeInsetsDirectional.fromSTEB(
-                                                4, 12, 4, 12),
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color: Color(0xFFE3F2FD),
-                                                borderRadius:
-                                                BorderRadius.circular(16),
-                                              ),
-                                              child: Padding(
-                                                padding: EdgeInsets.all(8),
-                                                child: Text(
-                                                  'Уже началась',
-                                                  style: FlutterFlowTheme.of(
-                                                      context)
-                                                      .bodySmall
-                                                      .override(
-                                                    fontFamily: 'Inter',
-                                                    color:
-                                                    Color(0xFF1565C0),
-                                                    letterSpacing: 0.0,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.max,
-                                        children: [
-                                          Icon(
-                                            Icons.access_time,
-                                            color: FlutterFlowTheme.of(context)
-                                                .secondaryText,
-                                            size: 20,
-                                          ),
-                                          Text(
-                                            '9:00  - 10:30',
-                                            style: FlutterFlowTheme.of(context)
-                                                .bodyMedium
-                                                .override(
-                                              fontFamily: 'Inter',
-                                              color: FlutterFlowTheme.of(
-                                                  context)
-                                                  .secondaryText,
-                                              letterSpacing: 0.0,
-                                            ),
-                                          ),
-                                        ].divide(SizedBox(width: 8)),
-                                      ),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.max,
-                                        children: [
-                                          Icon(
-                                            Icons.location_on,
-                                            color: FlutterFlowTheme.of(context)
-                                                .secondaryText,
-                                            size: 20,
-                                          ),
-                                          Text(
-                                            'Кабинет 303',
-                                            style: FlutterFlowTheme.of(context)
-                                                .bodyMedium
-                                                .override(
-                                              fontFamily: 'Inter',
-                                              color: FlutterFlowTheme.of(
-                                                  context)
-                                                  .secondaryText,
-                                              letterSpacing: 0.0,
-                                            ),
-                                          ),
-                                        ].divide(SizedBox(width: 8)),
-                                      ),
-                                    ].divide(SizedBox(height: 12)),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(8, 0, 8, 0),
-                            child: Material(
-                              color: Colors.transparent,
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Container(
-                                width: MediaQuery.sizeOf(context).width,
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context)
-                                      .primaryBackground,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      16, 16, 16, 16),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Row(
-                                        mainAxisSize: MainAxisSize.max,
-                                        mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            'Программная инженерия',
-                                            style: FlutterFlowTheme.of(context)
-                                                .titleMedium
-                                                .override(
-                                              fontFamily: 'Inter Tight',
-                                              letterSpacing: 0.0,
-                                            ),
-                                          ),
-                                          Padding(
-                                            padding:
-                                            EdgeInsetsDirectional.fromSTEB(
-                                                4, 12, 4, 12),
-                                            child: Container(
-                                              decoration: BoxDecoration(
-                                                color: Color(0xFFFFF3E0),
-                                                borderRadius:
-                                                BorderRadius.circular(16),
-                                              ),
-                                              child: Padding(
-                                                padding: EdgeInsets.all(8),
-                                                child: Text(
-                                                  'Скоро будет',
-                                                  style: FlutterFlowTheme.of(
-                                                      context)
-                                                      .bodySmall
-                                                      .override(
-                                                    fontFamily: 'Inter',
-                                                    color:
-                                                    Color(0xFFFF6F00),
-                                                    letterSpacing: 0.0,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.max,
-                                        children: [
-                                          Icon(
-                                            Icons.access_time,
-                                            color: FlutterFlowTheme.of(context)
-                                                .secondaryText,
-                                            size: 20,
-                                          ),
-                                          Text(
-                                            '10:40 - 12:10',
-                                            style: FlutterFlowTheme.of(context)
-                                                .bodyMedium
-                                                .override(
-                                              fontFamily: 'Inter',
-                                              color: FlutterFlowTheme.of(
-                                                  context)
-                                                  .secondaryText,
-                                              letterSpacing: 0.0,
-                                            ),
-                                          ),
-                                        ].divide(SizedBox(width: 8)),
-                                      ),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.max,
-                                        children: [
-                                          Icon(
-                                            Icons.location_on,
-                                            color: FlutterFlowTheme.of(context)
-                                                .secondaryText,
-                                            size: 20,
-                                          ),
-                                          Text(
-                                            'Кабинет 201',
-                                            style: FlutterFlowTheme.of(context)
-                                                .bodyMedium
-                                                .override(
-                                              fontFamily: 'Inter',
-                                              color: FlutterFlowTheme.of(
-                                                  context)
-                                                  .secondaryText,
-                                              letterSpacing: 0.0,
-                                            ),
-                                          ),
-                                        ].divide(SizedBox(width: 8)),
-                                      ),
-                                    ].divide(SizedBox(height: 12)),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(8, 0, 8, 0),
-                            child: Text(
-                              'Завтра',
-                              style: FlutterFlowTheme.of(context)
-                                  .headlineSmall
-                                  .override(
-                                fontFamily: 'Inter Tight',
-                                letterSpacing: 0.0,
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(8, 0, 8, 0),
-                            child: Material(
-                              color: Colors.transparent,
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Container(
-                                width: MediaQuery.sizeOf(context).width,
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context)
-                                      .primaryBackground,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      16, 16, 16, 16),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Програмная инженерия',
-                                        style: FlutterFlowTheme.of(context)
-                                            .titleMedium
-                                            .override(
-                                          fontFamily: 'Inter Tight',
-                                          letterSpacing: 0.0,
-                                        ),
-                                      ),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.max,
-                                        children: [
-                                          Icon(
-                                            Icons.access_time,
-                                            color: FlutterFlowTheme.of(context)
-                                                .secondaryText,
-                                            size: 20,
-                                          ),
-                                          Text(
-                                            '9:30 AM - 11:00 AM',
-                                            style: FlutterFlowTheme.of(context)
-                                                .bodyMedium
-                                                .override(
-                                              fontFamily: 'Inter',
-                                              color: FlutterFlowTheme.of(
-                                                  context)
-                                                  .secondaryText,
-                                              letterSpacing: 0.0,
-                                            ),
-                                          ),
-                                        ].divide(SizedBox(width: 8)),
-                                      ),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.max,
-                                        children: [
-                                          Icon(
-                                            Icons.location_on,
-                                            color: FlutterFlowTheme.of(context)
-                                                .secondaryText,
-                                            size: 20,
-                                          ),
-                                          Text(
-                                            'Room 405, Humanities Building',
-                                            style: FlutterFlowTheme.of(context)
-                                                .bodyMedium
-                                                .override(
-                                              fontFamily: 'Inter',
-                                              color: FlutterFlowTheme.of(
-                                                  context)
-                                                  .secondaryText,
-                                              letterSpacing: 0.0,
-                                            ),
-                                          ),
-                                        ].divide(SizedBox(width: 8)),
-                                      ),
-                                    ].divide(SizedBox(height: 12)),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                          Padding(
-                            padding: EdgeInsetsDirectional.fromSTEB(8, 0, 8, 0),
-                            child: Material(
-                              color: Colors.transparent,
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Container(
-                                width: MediaQuery.sizeOf(context).width,
-                                decoration: BoxDecoration(
-                                  color: FlutterFlowTheme.of(context)
-                                      .primaryBackground,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      16, 16, 16, 16),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        'Physics Lab',
-                                        style: FlutterFlowTheme.of(context)
-                                            .titleMedium
-                                            .override(
-                                          fontFamily: 'Inter Tight',
-                                          letterSpacing: 0.0,
-                                        ),
-                                      ),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.max,
-                                        children: [
-                                          Icon(
-                                            Icons.access_time,
-                                            color: FlutterFlowTheme.of(context)
-                                                .secondaryText,
-                                            size: 20,
-                                          ),
-                                          Text(
-                                            '2:00 PM - 3:30 PM',
-                                            style: FlutterFlowTheme.of(context)
-                                                .bodyMedium
-                                                .override(
-                                              fontFamily: 'Inter',
-                                              color: FlutterFlowTheme.of(
-                                                  context)
-                                                  .secondaryText,
-                                              letterSpacing: 0.0,
-                                            ),
-                                          ),
-                                        ].divide(SizedBox(width: 8)),
-                                      ),
-                                      Row(
-                                        mainAxisSize: MainAxisSize.max,
-                                        children: [
-                                          Icon(
-                                            Icons.location_on,
-                                            color: FlutterFlowTheme.of(context)
-                                                .secondaryText,
-                                            size: 20,
-                                          ),
-                                          Text(
-                                            'Lab 102, Science Building',
-                                            style: FlutterFlowTheme.of(context)
-                                                .bodyMedium
-                                                .override(
-                                              fontFamily: 'Inter',
-                                              color: FlutterFlowTheme.of(
-                                                  context)
-                                                  .secondaryText,
-                                              letterSpacing: 0.0,
-                                            ),
-                                          ),
-                                        ].divide(SizedBox(width: 8)),
-                                      ),
-                                    ].divide(SizedBox(height: 12)),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ].divide(SizedBox(height: 16)),
+                          // Today's Schedule
+                          _buildDaySection('Сегодня', _schedule['today'] ?? []),
+                          const SizedBox(height: 24),
+                          // Tomorrow's Schedule
+                          _buildDaySection('Завтра', _schedule['tomorrow'] ?? []),
+                          const SizedBox(height: 24),
+                        ].divide(const SizedBox(height: 16)),
                       ),
-                    ),
-                  ),
-                ),
-              ),
-              Material(
-                color: Colors.transparent,
-                elevation: 8,
-                child: Container(
-                  width: MediaQuery.sizeOf(context).width,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                  ),
-                  child: Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(12, 24, 12, 24),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.home_outlined,
-                              color: FlutterFlowTheme.of(context).primary,
-                              size: 24,
-                            ),
-                            Text(
-                              'Главная',
-                              style: FlutterFlowTheme.of(context)
-                                  .bodySmall
-                                  .override(
-                                fontFamily: 'Inter',
-                                color: FlutterFlowTheme.of(context)
-                                    .primary,
-                                letterSpacing: 0.0,
-                              ),
-                            ),
-                          ].divide(SizedBox(height: 4)),
-                        ),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                Navigator.pushNamed(context, '/timetable');
-                              },
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.calendar_today,
-                                    color: FlutterFlowTheme.of(context).secondaryText,
-                                    size: 16,
-                                  ),
-                                  Text(
-                                    'Расписание',
-                                    style: FlutterFlowTheme.of(context)
-                                        .bodySmall
-                                        .override(
-                                      fontFamily: 'Inter',
-                                      color: FlutterFlowTheme.of(context).secondaryText,
-                                      letterSpacing: 0.0,
-                                    ),
-                                  ),
-                                ].divide(SizedBox(height: 4)),
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.menu_book,
-                              color: FlutterFlowTheme.of(context).secondaryText,
-                              size: 24,
-                            ),
-                            Text(
-                              'Курсы',
-                              style: FlutterFlowTheme.of(context)
-                                  .bodySmall
-                                  .override(
-                                fontFamily: 'Inter',
-                                color: FlutterFlowTheme.of(context)
-                                    .secondaryText,
-                                letterSpacing: 0.0,
-                              ),
-                            ),
-                          ].divide(SizedBox(height: 4)),
-                        ),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            InkWell(
-                              onTap: () {
-                                // Переход на страницу профиля
-                                Navigator.pushNamed(context, '/auths');
-                              },
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.person_outline,
-                                    color: FlutterFlowTheme.of(context).secondaryText,
-                                    size: 24,
-                                  ),
-                                  Text(
-                                    'Профиль',
-                                    style: FlutterFlowTheme.of(context)
-                                        .bodySmall
-                                        .override(
-                                      fontFamily: 'Inter',
-                                      color: FlutterFlowTheme.of(context).secondaryText,
-                                      letterSpacing: 0.0,
-                                    ),
-                                  ),
-                                ].divide(SizedBox(height: 4)),
-                              ),
-                            ),
-                          ],
-                        )
-                      ],
                     ),
                   ),
                 ),
@@ -668,7 +350,63 @@ class _MainTimetableWidgetState extends State<MainTimetableWidget> {
             ],
           ),
         ),
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: 0,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: FlutterFlowTheme.of(context).primary,
+          unselectedItemColor: FlutterFlowTheme.of(context).secondaryText,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              label: 'Главная',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_today),
+              label: 'Расписание',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.menu_book),
+              label: 'Заметки',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              label: 'Профиль',
+            ),
+          ],
+          onTap: (index) {
+            if (index == 1) Navigator.pushNamed(context, '/timetable');
+            if (index == 2) Navigator.pushNamed(context, '/knowledgeGraph');
+            if (index == 3) Navigator.pushNamed(context, '/user_profile');
+          },
+        ),
       ),
     );
+  }
+
+  Widget _buildDaySection(String title, List<Map<String, dynamic>> lessons) {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsetsDirectional.fromSTEB(8, 0, 8, 0),
+          child: Text(
+            title,
+            style: FlutterFlowTheme.of(context).headlineSmall.override(
+              fontFamily: 'Inter Tight',
+              letterSpacing: 0.0,
+            ),
+          ),
+        ),
+
+        if (lessons.isEmpty)
+          _buildNoLessonsCard()
+        else
+          ...lessons.map(_buildLessonCard),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
   }
 }

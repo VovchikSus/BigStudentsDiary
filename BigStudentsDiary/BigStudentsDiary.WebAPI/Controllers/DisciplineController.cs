@@ -30,4 +30,24 @@ public class DisciplineController:Controller
             return Ok(result);
         return NotFound($"Дисциплина с id={id} не найдена!");
     }
+    
+   
+    [HttpGet("name/{disciplineName}")]
+    public async Task<ActionResult> GetByName(string disciplineName)
+    {
+        var discipline = await _disciplinesRepository.GetDisciplineIdByName(disciplineName);
+        return discipline != null 
+            ? Ok(discipline) 
+            : NotFound($"Дисциплина '{disciplineName}' не найдена");
+    }
+
+
+    [HttpGet("group/{groupId}")]
+    public async Task<ActionResult> GetByGroup(int groupId)
+    {
+        var result = await _disciplinesRepository.GetDisciplinesByGroup(groupId);
+        return result.Successful 
+            ? Ok(result.Result) 
+            : BadRequest(result.ErrorMessage);
+    }
 }

@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
+import '../constants/api_constants.dart';
 import '../models/timetable_model.dart';
 import '../utils/storage_helper.dart';
-import '/flutter_flow/flutter_flow_icon_button.dart';
 import '/flutter_flow/flutter_flow_theme.dart';
 import '/flutter_flow/flutter_flow_util.dart';
-import '/flutter_flow/flutter_flow_widgets.dart';
 
 class TimetablePageWidget extends StatefulWidget {
   const TimetablePageWidget({super.key});
@@ -28,7 +26,7 @@ class _TimetablePageWidgetState extends State<TimetablePageWidget> {
 
   List<DateTime> _getWeekDates(DateTime startDate) {
     final dates = List.generate(7, (i) => startDate.add(Duration(days: i)));
-    dates.sort(); // Сортировка всего списка дат
+    dates.sort();
     return dates;
   }
 
@@ -36,13 +34,9 @@ class _TimetablePageWidgetState extends State<TimetablePageWidget> {
     setState(() => _isLoading = true);
 
     final token = await StorageHelper.getToken();
-
-    // Добавлено: Проверка и логирование токена
-
-
     if (token == null || token.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Требуется авторизация')),
+        const SnackBar(content: Text('Требуется авторизация')),
       );
       Navigator.pushReplacementNamed(context, '/auths');
       return;
@@ -53,17 +47,12 @@ class _TimetablePageWidgetState extends State<TimetablePageWidget> {
       final newSchedule = <String, List<dynamic>>{};
 
       for (final date in weekDates) {
-        final url = 'https://localhost:7049/date/${_formatDate(date)}';
-        print('Запрос к URL: $url'); // Логирование URL
+        final formattedDate = _formatDate(date);
+        final url = ApiConstants.formattedDateEndpoint(formattedDate);
 
         final response = await _dio.get(
-          url,
-          options: Options(
-            headers: {
-              'Authorization': 'Bearer $token',
-              'Content-Type': 'application/json',
-            },
-          ),
+            url,
+            options: Options(headers: ApiConstants.authHeaders(token))
         );
 
         if (response.statusCode == 200) {
@@ -76,15 +65,12 @@ class _TimetablePageWidgetState extends State<TimetablePageWidget> {
 
       setState(() => _weeklySchedule = newSchedule);
     } on DioException catch (e) {
-      // Улучшена обработка ошибок
-      print('Ошибка сети: ${e.message}');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Ошибка загрузки: ${e.message}')),
       );
     } catch (e) {
-      print('Общая ошибка: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Неизвестная ошибка')),
+        const SnackBar(content: Text('Неизвестная ошибка')),
       );
     } finally {
       setState(() => _isLoading = false);
@@ -121,118 +107,117 @@ class _TimetablePageWidgetState extends State<TimetablePageWidget> {
   Widget _buildDaySchedule(String dayName, List<dynamic>? lessons) {
     if (lessons == null || lessons.isEmpty) {
       return Padding(
-          padding: EdgeInsetsDirectional.fromSTEB(8, 0, 8, 0),
-          child: Material(
-            color: Colors.transparent,
-            elevation: 2,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: Container(
-              width: MediaQuery.sizeOf(context).width,
-              decoration: BoxDecoration(
-                color: FlutterFlowTheme.of(context).primaryBackground,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Padding(
-                padding: EdgeInsetsDirectional.fromSTEB(16, 16, 16, 16),
-                child: Column(
-                  children: [
-                    Text(dayName,
-                        style: FlutterFlowTheme.of(context)
-                            .titleMedium
-                            .override(
-                                fontFamily: 'Inter Tight',
-                                color: FlutterFlowTheme.of(context).primary)),
-                    Text('Занятий нет',
-                        style: FlutterFlowTheme.of(context).bodyMedium.override(
-                            color: FlutterFlowTheme.of(context).secondaryText)),
-                  ].divide(SizedBox(height: 12)),
-                ),
-              ),
-            ),
-          ));
-    }
-
-    return Padding(
-        padding: EdgeInsetsDirectional.fromSTEB(8, 0, 8, 0),
+        padding: const EdgeInsetsDirectional.fromSTEB(8, 0, 8, 0),
         child: Material(
           color: Colors.transparent,
           elevation: 2,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           child: Container(
             width: MediaQuery.sizeOf(context).width,
             decoration: BoxDecoration(
-                color: FlutterFlowTheme.of(context).primaryBackground,
-                borderRadius: BorderRadius.circular(12)),
+              color: FlutterFlowTheme.of(context).primaryBackground,
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Padding(
-              padding: EdgeInsetsDirectional.fromSTEB(16, 16, 16, 16),
+              padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 16),
               child: Column(
                 children: [
                   Text(dayName,
-                      style: FlutterFlowTheme.of(context).titleMedium.override(
+                      style: FlutterFlowTheme.of(context)
+                          .titleMedium
+                          .override(
                           fontFamily: 'Inter Tight',
                           color: FlutterFlowTheme.of(context).primary)),
-                  ...lessons.map((lesson) => Container(
-                        decoration: BoxDecoration(
-                            color: _getLessonColor(lesson['discipline']),
-                            borderRadius: BorderRadius.circular(8)),
-                        child: Padding(
-                          padding: EdgeInsets.all(12),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(lesson['discipline'],
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodyLarge
-                                          .override(
-                                              color: _getTextColor(
-                                                  lesson['discipline']))),
-                                  Text(lesson['timeRange'],
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodyMedium
-                                          .override(
-                                              color: _getTextColor(
-                                                  lesson['discipline']))),
-                                ],
-                              ),
-                              Text(
-                                  '${lesson['building']} корпус, ауд. ${lesson['room']}',
-                                  style: FlutterFlowTheme.of(context)
-                                      .bodyMedium
-                                      .override(
-                                          color: FlutterFlowTheme.of(context)
-                                              .secondaryText)),
-                            ].divide(SizedBox(height: 8)),
-                          ),
-                        ),
-                      )),
-                ].divide(SizedBox(height: 12)),
+                  Text('Занятий нет',
+                      style: FlutterFlowTheme.of(context).bodyMedium.override(
+                          color: FlutterFlowTheme.of(context).secondaryText)),
+                ].divide(const SizedBox(height: 12)),
               ),
             ),
           ),
-        ));
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsetsDirectional.fromSTEB(8, 0, 8, 0),
+      child: Material(
+        color: Colors.transparent,
+        elevation: 2,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        child: Container(
+          width: MediaQuery.sizeOf(context).width,
+          decoration: BoxDecoration(
+              color: FlutterFlowTheme.of(context).primaryBackground,
+              borderRadius: BorderRadius.circular(12)),
+          child: Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 16, 16, 16),
+            child: Column(
+              children: [
+                Text(dayName,
+                    style: FlutterFlowTheme.of(context).titleMedium.override(
+                        fontFamily: 'Inter Tight',
+                        color: FlutterFlowTheme.of(context).primary)),
+                ...lessons.map((lesson) => Container(
+                  decoration: BoxDecoration(
+                      color: _getLessonColor(lesson['discipline']),
+                      borderRadius: BorderRadius.circular(8)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(lesson['discipline'],
+                                style: FlutterFlowTheme.of(context)
+                                    .bodyLarge
+                                    .override(
+                                    color: _getTextColor(
+                                        lesson['discipline']))),
+                            Text(lesson['timeRange'],
+                                style: FlutterFlowTheme.of(context)
+                                    .bodyMedium
+                                    .override(
+                                    color: _getTextColor(
+                                        lesson['discipline']))),
+                          ],
+                        ),
+                        Text(
+                            '${lesson['building']} корпус, ауд. ${lesson['room']}',
+                            style: FlutterFlowTheme.of(context)
+                                .bodyMedium
+                                .override(
+                                color: FlutterFlowTheme.of(context)
+                                    .secondaryText)),
+                      ].divide(const SizedBox(height: 8)),
+                    ),
+                  ),
+                )),
+              ].divide(const SizedBox(height: 12)),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   Color _getLessonColor(String discipline) {
     final colors = {
-      'Статистика': Color(0xFFE3F2FD),
-      'История': Color(0xFFFFF3E0),
-      'Философия': Color(0xFFE8F5E9),
-      'Высшая математика': Color(0xFFEDE7F6),
+      'Статистика': const Color(0xFFE3F2FD),
+      'История': const Color(0xFFFFF3E0),
+      'Философия': const Color(0xFFE8F5E9),
+      'Высшая математика': const Color(0xFFEDE7F6),
     };
-    return colors[discipline] ?? Color(0xFFF5F5F5);
+    return colors[discipline] ?? const Color(0xFFF5F5F5);
   }
 
   Color _getTextColor(String discipline) {
     final colors = {
-      'Статистика': Color(0xFF1565C0),
-      'История': Color(0xFFFF6F00),
-      'Философия': Color(0xFF2E7D32),
-      'Высшая математика': Color(0xFF4527A0),
+      'Статистика': const Color(0xFF1565C0),
+      'История': const Color(0xFFFF6F00),
+      'Философия': const Color(0xFF2E7D32),
+      'Высшая математика': const Color(0xFF4527A0),
     };
     return colors[discipline] ?? Colors.black;
   }
@@ -244,38 +229,15 @@ class _TimetablePageWidgetState extends State<TimetablePageWidget> {
       child: Scaffold(
         key: scaffoldKey,
         backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-        appBar: AppBar(
-          backgroundColor: FlutterFlowTheme.of(context).primary,
-          leading: FlutterFlowIconButton(
-            borderColor: Colors.transparent,
-            buttonSize: 40,
-            icon: Icon(
-              Icons.arrow_back_rounded,
-              color: Colors.white,
-              size: 24,
-            ),
-            onPressed: () => context.pop(),
-          ),
-          title: Padding(
-            padding: EdgeInsetsDirectional.fromSTEB(24, 0, 0, 0),
-            child: Text(
-              'Расписание',
-              style: FlutterFlowTheme.of(context).headlineMedium.override(
-                    fontFamily: 'Inter Tight',
-                    color: Colors.white,
-                    fontSize: 22,
-                  ),
-            ),
-          ),
-          centerTitle: true,
-          elevation: 2,
-        ),
+        // УДАЛЕН AppBar (верхняя панель с кнопкой "назад")
+
         body: SafeArea(
           child: Column(
             children: [
+              // Header Section (как на главной странице)
               Container(
                 height: 180,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     colors: [Color(0xFF1A237E), Color(0xFF3F51B5)],
                     stops: [0, 1],
@@ -284,155 +246,155 @@ class _TimetablePageWidgetState extends State<TimetablePageWidget> {
                   ),
                 ),
                 child: Padding(
-                  padding: EdgeInsetsDirectional.fromSTEB(24, 24, 24, 0),
+                  padding: const EdgeInsetsDirectional.fromSTEB(24, 24, 24, 0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'Недельное расписание',
-                        style: FlutterFlowTheme.of(context)
-                            .headlineMedium
-                            .override(
-                              fontFamily: 'Inter Tight',
-                              color: Colors.white,
-                              letterSpacing: 0.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
                       Row(
-                        mainAxisSize: MainAxisSize.max,
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            DateFormat('d MMMM yyyy', 'ru_RU').format(_selectedDate),
-                            style: FlutterFlowTheme.of(context).bodyLarge.override(
-                              fontFamily: 'Inter',
-                              color: Color(0xFFE0E0E0),
-                              letterSpacing: 0.0,
-                            ),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Расписание',
+                                style: FlutterFlowTheme.of(context)
+                                    .headlineMedium
+                                    .override(
+                                  fontFamily: 'Inter Tight',
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'Весенний семестр',
+                                style: FlutterFlowTheme.of(context)
+                                    .bodyLarge
+                                    .override(color: const Color(0xFFE0E0E0)),
+                              ),
+                            ],
                           ),
-                          FlutterFlowIconButton(
-                            borderRadius: 20,
-                            buttonSize: 40,
-                            fillColor: Color(0x33FFFFFF),
-                            icon: Icon(
-                              Icons.calendar_today,
-                              color: Colors.white,
-                              size: 24,
-                            ),
+                          IconButton(
+                            icon: const Icon(Icons.calendar_today,
+                                color: Colors.white, size: 28),
                             onPressed: () => _pickDate(context),
                           ),
                         ],
                       ),
-                    ].divide(SizedBox(height: 8)),
+                    ],
                   ),
                 ),
               ),
+              // Schedule Content
               Expanded(
                 child: Container(
+                  width: MediaQuery.sizeOf(context).width,
                   decoration: BoxDecoration(
                     color: FlutterFlowTheme.of(context).secondaryBackground,
-                    borderRadius: BorderRadius.only(
-                      bottomLeft: Radius.circular(0),
-                      bottomRight: Radius.circular(0),
+                    borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(32),
-                      topRight: Radius.circular(0),
                     ),
                   ),
                   child: Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(24, 24, 24, 0),
+                    padding: const EdgeInsetsDirectional.fromSTEB(24, 24, 24, 0),
                     child: _isLoading
-                        ? Center(child: CircularProgressIndicator())
+                        ? const Center(child: CircularProgressIndicator())
                         : SingleChildScrollView(
-                            child: Column(
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsetsDirectional.fromSTEB(
+                                8, 0, 8, 0),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.max,
+                              mainAxisAlignment:
+                              MainAxisAlignment.spaceBetween,
                               children: [
-                                Padding(
-                                  padding: EdgeInsetsDirectional.fromSTEB(
-                                      8, 0, 8, 0),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.max,
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      FlutterFlowIconButton(
-                                        buttonSize: 40,
-                                        icon: Icon(
-                                          Icons.chevron_left,
-                                          color: FlutterFlowTheme.of(context)
-                                              .primary,
-                                          size: 24,
-                                        ),
-                                        onPressed: () {
-                                          setState(() => _selectedDate =
-                                              _selectedDate
-                                                  .subtract(Duration(days: 7)));
-                                          _fetchWeeklySchedule();
-                                        },
-                                      ),
-                                      Text(
-                                        DateFormat('dd.MM.yyyy').format(_selectedDate),
-                                        style: FlutterFlowTheme.of(context)
-                                            .headlineSmall
-                                            .override(
-                                          fontFamily: 'Inter Tight',
-                                          letterSpacing: 0.0,
-                                        ),
-                                      ),
-                                      FlutterFlowIconButton(
-                                        buttonSize: 40,
-                                        icon: Icon(
-                                          Icons.chevron_right,
-                                          color: FlutterFlowTheme.of(context)
-                                              .primary,
-                                          size: 24,
-                                        ),
-                                        onPressed: () {
-                                          setState(() => _selectedDate =
-                                              _selectedDate
-                                                  .add(Duration(days: 7)));
-                                          _fetchWeeklySchedule();
-                                        },
-                                      ),
-                                    ],
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.chevron_left,
+                                    color: FlutterFlowTheme.of(context)
+                                        .primary,
+                                    size: 24,
+                                  ),
+                                  onPressed: () {
+                                    setState(() => _selectedDate =
+                                        _selectedDate
+                                            .subtract(const Duration(days: 7)));
+                                    _fetchWeeklySchedule();
+                                  },
+                                ),
+                                Text(
+                                  DateFormat('dd.MM.yyyy').format(_selectedDate),
+                                  style: FlutterFlowTheme.of(context)
+                                      .headlineSmall
+                                      .override(
+                                    fontFamily: 'Inter Tight',
+                                    letterSpacing: 0.0,
                                   ),
                                 ),
-                                ..._weeklySchedule.entries
-                                    .map((e) => _buildDaySchedule(
-                                  DateFormat('EEEE', 'ru_RU').format(
-                                      DateFormat('dd.MM.yyyy').parse(e.key)
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.chevron_right,
+                                    color: FlutterFlowTheme.of(context)
+                                        .primary,
+                                    size: 24,
                                   ),
-                                          e.value,
-                                        )),
-                              ].divide(SizedBox(height: 16)),
+                                  onPressed: () {
+                                    setState(() => _selectedDate =
+                                        _selectedDate
+                                            .add(const Duration(days: 7)));
+                                    _fetchWeeklySchedule();
+                                  },
+                                ),
+                              ],
                             ),
                           ),
-                  ),
-                ),
-              ),
-              // Нижняя навигационная панель (оставить без изменений)
-              Material(
-                color: Colors.transparent,
-                elevation: 8,
-                child: Container(
-                  width: MediaQuery.sizeOf(context).width,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                  ),
-                  child: Padding(
-                    padding: EdgeInsetsDirectional.fromSTEB(12, 24, 12, 24),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        // ... Ваш код навигационной панели
-                      ],
+                          ..._weeklySchedule.entries
+                              .map((e) => _buildDaySchedule(
+                            DateFormat('EEEE', 'ru_RU').format(
+                                DateFormat('dd.MM.yyyy').parse(e.key)),
+                            e.value,
+                          )),
+                        ].divide(const SizedBox(height: 16)),
+                      ),
                     ),
                   ),
                 ),
               ),
             ],
           ),
+        ),
+        // Добавлена стандартная нижняя навигация как на главной странице
+        bottomNavigationBar: BottomNavigationBar(
+          currentIndex: 1, // Активная вкладка "Расписание"
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: FlutterFlowTheme.of(context).primary,
+          unselectedItemColor: FlutterFlowTheme.of(context).secondaryText,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home_outlined),
+              label: 'Главная',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.calendar_today),
+              label: 'Расписание',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.menu_book),
+              label: 'Заметки',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.person_outline),
+              label: 'Профиль',
+            ),
+          ],
+          onTap: (index) {
+            if (index == 0) Navigator.pushReplacementNamed(context, '/');
+            if (index == 1) Navigator.pushReplacementNamed(context, '/timetable');
+            if (index == 2) Navigator.pushReplacementNamed(context, '/knowledgeGraph');
+            if (index == 3) Navigator.pushReplacementNamed(context, '/user_profile');
+          },
         ),
       ),
     );

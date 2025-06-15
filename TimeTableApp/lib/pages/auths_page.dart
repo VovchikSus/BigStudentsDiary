@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:timetableapp/services/api_service.dart';
 import 'package:timetableapp/services/log_service.dart';
-import 'package:timetableapp/utils/storage_helper.dart';
-
 import '../flutter_flow/ff_button_widget.dart';
 import '../flutter_flow/flutter_flow_theme.dart';
 import '../models/AuthPageModel.dart';
@@ -64,9 +62,9 @@ class _AuthPageWidgetState extends State<AuthPageWidget> {
         _model.textController2!.text,
       );
 
-     // await StorageHelper.saveToken('$token');
+      // await StorageHelper.saveToken('$token');
 
-      Navigator.pushNamed(context, '/user_profile');
+      Navigator.pushNamed(context, '/');
     } catch (e) {
       LogService.error('Ошибка входа', e);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -116,13 +114,13 @@ class _AuthPageWidgetState extends State<AuthPageWidget> {
       value: selectedGroupId,
       decoration: InputDecoration(
         filled: true,
-        fillColor: Color(0xFFF5F5F5),
+        fillColor: const Color(0xFFF5F5F5),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Color(0xFFE0E0E0)),
+          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
         ),
       ),
-      hint: Text('Выберите группу'),
+      hint: const Text('Выберите группу'),
       items: groups.map((group) => DropdownMenuItem<int>(
         value: group['groupId'],
         child: Text(group['groupCode']),
@@ -144,22 +142,31 @@ class _AuthPageWidgetState extends State<AuthPageWidget> {
       child: Scaffold(
         key: scaffoldKey,
         backgroundColor: FlutterFlowTheme.of(context).primaryBackground,
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Container(
-              height: MediaQuery.sizeOf(context).height,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFF1A237E), Color(0xFF3F51B5)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
+        // Добавлена кнопка "Назад"
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF1A237E), Color(0xFF3F51B5)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ),
+          ),
+          child: SafeArea(
+            child: SingleChildScrollView(
               child: Padding(
-                padding: EdgeInsets.all(24),
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    const SizedBox(height: 16), // Отступ после AppBar
                     Text(
                       'С возвращением',
                       style: FlutterFlowTheme.of(context).headlineLarge.override(
@@ -168,7 +175,7 @@ class _AuthPageWidgetState extends State<AuthPageWidget> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: 8),
                     Text(
                       'Войти чтобы продолжить или создай новый аккаунт',
                       style: FlutterFlowTheme.of(context).bodyLarge.override(
@@ -176,7 +183,7 @@ class _AuthPageWidgetState extends State<AuthPageWidget> {
                         color: Color(0xFFE0E0E0),
                       ),
                     ),
-                    SizedBox(height: 24),
+                    const SizedBox(height: 24),
                     _buildAuthForm(
                       title: 'Войти',
                       children: [
@@ -208,7 +215,6 @@ class _AuthPageWidgetState extends State<AuthPageWidget> {
                               color: Colors.white,
                             ),
                             borderRadius: BorderRadius.circular(25),
-                            // Добавили обязательные параметры
                             padding: EdgeInsets.zero,
                             iconPadding: EdgeInsets.zero,
                             elevation: 0,
@@ -216,7 +222,7 @@ class _AuthPageWidgetState extends State<AuthPageWidget> {
                         ),
                       ],
                     ),
-                    SizedBox(height: 24),
+                    const SizedBox(height: 24),
                     _buildAuthForm(
                       title: 'Создать аккаунт',
                       children: [
@@ -247,7 +253,7 @@ class _AuthPageWidgetState extends State<AuthPageWidget> {
                           ),
                         ),
                         _buildGroupDropdown(),
-                        SizedBox(height: 20),
+                        const SizedBox(height: 20),
                         FFButtonWidget(
                           onPressed: isLoading ? null : _handleRegister,
                           text: 'Зарегистрироваться',
@@ -259,7 +265,10 @@ class _AuthPageWidgetState extends State<AuthPageWidget> {
                               fontFamily: 'Inter Tight',
                               color: Colors.white,
                             ),
-                            borderRadius: BorderRadius.circular(25), padding: EdgeInsets.zero, iconPadding: EdgeInsets.zero, elevation: 0,
+                            borderRadius: BorderRadius.circular(25),
+                            padding: EdgeInsets.zero,
+                            iconPadding: EdgeInsets.zero,
+                            elevation: 0,
                           ),
                         ),
                       ],
@@ -285,7 +294,7 @@ class _AuthPageWidgetState extends State<AuthPageWidget> {
           borderRadius: BorderRadius.circular(16),
         ),
         child: Padding(
-          padding: EdgeInsets.all(24),
+          padding: const EdgeInsets.all(24),
           child: Column(
             children: [
               Text(
@@ -296,9 +305,9 @@ class _AuthPageWidgetState extends State<AuthPageWidget> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ...children.map((child) => Padding(
-                padding: EdgeInsets.only(bottom: 20),
+                padding: const EdgeInsets.only(bottom: 20),
                 child: child,
               )),
             ],
@@ -323,7 +332,7 @@ class _AuthPageWidgetState extends State<AuthPageWidget> {
       decoration: InputDecoration(
         labelText: label,
         filled: true,
-        fillColor: Color(0xFFF5F5F5),
+        fillColor: const Color(0xFFF5F5F5),
         suffixIcon: isPassword
             ? IconButton(
           icon: Icon(visibility ? Icons.visibility : Icons.visibility_off),
@@ -332,7 +341,7 @@ class _AuthPageWidgetState extends State<AuthPageWidget> {
             : null,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: Color(0xFFE0E0E0)),
+          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
         ),
       ),
     );

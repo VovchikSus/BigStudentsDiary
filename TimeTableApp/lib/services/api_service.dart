@@ -2,9 +2,11 @@ import 'package:dio/dio.dart';
 import 'package:timetableapp/services/log_service.dart';
 import 'package:timetableapp/utils/storage_helper.dart';
 
+import '../constants/api_constants.dart';
+
 class ApiService {
   static final Dio _dio = Dio(BaseOptions(
-    baseUrl: 'https://localhost:7049',
+    baseUrl: ApiConstants.baseUrl,
     connectTimeout: Duration(seconds: 5),
     receiveTimeout: Duration(seconds: 3),
   ));
@@ -51,8 +53,8 @@ class ApiService {
       await _dio.post(
         '/student/register',
         data: {
-          'name': name,
-          'surname': surname,
+          'studentName': name,
+          'studentSurname': surname,
           'studentLogin': login,
           'studentPassword': password,
           'groupId': groupId,

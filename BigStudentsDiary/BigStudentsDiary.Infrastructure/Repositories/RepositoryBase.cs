@@ -29,7 +29,6 @@ public abstract class RepositoryBase
                 result.Add(creator.Map(reader));
             }
         }
-
         await connection.CloseAsync();
         return result;
     }
@@ -40,7 +39,6 @@ public abstract class RepositoryBase
         {
             throw new ArgumentNullException(nameof(sql));
         }
-
         await using var connection = new SqlConnection(_connectionString);
         await connection.OpenAsync();
         await using (var command = new SqlCommand(sql, connection))
@@ -48,7 +46,6 @@ public abstract class RepositoryBase
             command.Parameters.AddRange(parameters);
             await command.ExecuteNonQueryAsync();
         }
-
         await connection.CloseAsync();
     }
 }

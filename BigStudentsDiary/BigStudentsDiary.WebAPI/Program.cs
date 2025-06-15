@@ -13,6 +13,7 @@ using BigStudentsDiary.Domain.Interfaces.IRepositories;
 using BigStudentsDiary.Infrastructure.Repositories;
 using BigStudentsDiary.WebAPI.Extensions;
 using Microsoft.AspNetCore.CookiePolicy;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,12 +24,21 @@ Log.Logger = new LoggerConfiguration()
     .CreateLogger();
 
 
-
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole();
+builder.Logging.AddDebug();
+builder.Logging.SetMinimumLevel(LogLevel.Debug);
 // Регистрация сервисов
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
 
+
+builder.Services.AddSwaggerGen();
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "VK Callback API", Version = "v1" });
+    
+});
 builder.Services.AddSingleton<IStudentsRepository, StudentsRepository>();
 builder.Services.AddSingleton<ITeachersRepository, TeachersRepository>();
 builder.Services.AddSingleton<IHomeWorksRepository, HomeWorksRepository>();
@@ -39,9 +49,11 @@ builder.Services.AddSingleton<IDepartmentRepository, DepartmentRepository>();
 builder.Services.AddSingleton<IDisciplinesRepository, DisciplinesRepository>();
 builder.Services.AddSingleton<IBuildingRepository, BuildingRepository>();
 builder.Services.AddSingleton<IRoomRepository, RoomRepository>();
+builder.Services.AddSingleton<INoteRepository, NoteRepository>();
 builder.Services.AddSingleton<IJwtProvider, JwtProvider>();
 builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>(); 
 builder.Services.AddSingleton<StudentsService>();
+builder.Services.AddSingleton<NoteService>();
 builder.Services.AddSingleton<TeachersService>();
 builder.Services.AddSingleton<TimeTableService>();
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection("JwtOptions")); 
@@ -59,14 +71,18 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
+//app.UseHttpsRedirection();
+app.UseRouting();
 app.UseCors(options => options
-    .WithOrigins("http://localhost:64959","http://localhost:8080") // Замените на точный порт, который используется Flutter-приложением
+    .WithOrigins("http://localhost:7049","http://localhost:8080","https://champagne-biographies-batman-forming.trycloudflare.com") // Замените на точный порт, который используется Flutter-приложением
     .AllowAnyHeader()
     .AllowAnyMethod()
     .AllowCredentials());
+app.UseWebSockets();
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.UseHttpsRedirection();
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseCookiePolicy(new CookiePolicyOptions
 {
@@ -75,13 +91,13 @@ app.UseCookiePolicy(new CookiePolicyOptions
     Secure = CookieSecurePolicy.Always
 });
 
-app.UseAuthentication();
-app.UseAuthorization();
+app.UseEndpoints(endpoints => endpoints.MapControllers());
 
-app.UseMiddleware<ExceptionMiddleware>();
+
 
 app.MapControllers();
 app.MapStudentEndPoints();
 app.MapTeacherEndPoints();
-
-app.Run();
+app.MapGet("/", () => "VK Callback API is running!");
+app.MapGet("/ping", () => "pong");
+app.Run("http://*:7049");
